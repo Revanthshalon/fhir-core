@@ -234,3 +234,22 @@ fn test_serde_roundtrip() {
     let deserialized: FhirString = serde_json::from_str(&json).unwrap();
     assert_eq!(original, deserialized);
 }
+
+#[test]
+fn test_from_fhir_string_into_string() {
+    let fhir_str = FhirString::new("Observation Note").unwrap();
+    let s: String = fhir_str.into();
+    assert_eq!(s, "Observation Note");
+}
+
+#[test]
+fn test_string_error_display_formatting() {
+    let err = StringError::ExceedsMaxLength {
+        count: 1048577,
+        max: 1048576,
+    };
+    assert_eq!(
+        err.to_string(),
+        "character count (1048577) exceeds maximum allowed (1048576)"
+    );
+}

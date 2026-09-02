@@ -39,8 +39,8 @@ fn test_unexpected_padding() {
 #[test]
 fn test_too_much_padding() {
     assert_eq!(
-        Base64Binary::validate("T==="),
-        Err(Base64Error::InvalidPadding { count: 3 })
+        Base64Binary::validate("===="),
+        Err(Base64Error::InvalidPadding { count: 4 })
     );
 }
 
@@ -155,4 +155,58 @@ fn test_serde_empty_string() {
     assert_eq!(json, "\"\"");
     let deserialized: Base64Binary = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.as_str(), "");
+}
+
+#[test]
+fn test_into_inner_and_from_into_string() {
+    let b64 = Base64Binary::new("TWFu").unwrap();
+    assert_eq!(b64.clone().into_inner(), "TWFu");
+
+    let s: String = b64.into();
+    assert_eq!(s, "TWFu");
+}
+
+#[test]
+fn test_from_str() {
+    use std::str::FromStr;
+
+    let b64 = Base64Binary::from_str("TQ==").unwrap();
+    assert_eq!(b64.as_str(), "TQ==");
+    assert!(Base64Binary::from_str("invalid").is_err());
+}
+
+#[test]
+fn test_insufficient_data_before_padding() {
+    assert_eq!(
+        Base64Binary::validate("A==="),
+        Err(Base64Error::InsufficientDataBeforePadding)
+    );
+    assert_eq!(
+        Base64Binary::validate("TWFuA==="),
+        Err(Base64Error::InsufficientDataBeforePadding)
+    );
+    assert_eq!(
+        Base64Binary::validate("===="),
+        Err(Base64Error::InvalidPadding { count: 4 })
+    );
+}
+
+#[test]
+fn test_base64_error_display_formatting() {
+    assert_eq!(
+        Base64Error::InvalidLength(5).to_string(),
+        "length (5) is not a multiple of 4"
+    );
+    assert_eq!(
+        Base64Error::InvalidPadding { count: 4 }.to_string(),
+        "invalid padding: found 4 '=' characters (max allowed is 2)"
+    );
+    assert_eq!(
+        Base64Error::UnexpectedPadding { index: 1 }.to_string(),
+        "unexpected padding character '=' at index 1"
+    );
+    assert_eq!(
+        Base64Error::InsufficientDataBeforePadding.to_string(),
+        "invalid padded block: requires at least 2 data characters before padding"
+    );
 }

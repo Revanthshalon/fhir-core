@@ -179,17 +179,17 @@ impl Base64Binary {
             padding_count += 1;
         }
 
+        let data_len = len - padding_count;
+
+        // Padded 4-char block cannot have fewer than 2 data characters (e.g., "A===" is invalid)
+        if padding_count > 0 && data_len % 4 == 1 {
+            return Err(Base64Error::InsufficientDataBeforePadding);
+        }
+
         if padding_count > 2 {
             return Err(Base64Error::InvalidPadding {
                 count: padding_count,
             });
-        }
-
-        let data_len = len - padding_count;
-
-        // Padded 4-char block cannot have fewer than 2 data characters (e.g., "A===" is invalid)
-        if padding_count > 0 && data_len % 4 < 2 {
-            return Err(Base64Error::InsufficientDataBeforePadding);
         }
 
         // 3. Validate characters in the data portion

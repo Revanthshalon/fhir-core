@@ -3,6 +3,9 @@
 pub mod constraints;
 pub mod r#type;
 
+#[cfg(test)]
+mod test;
+
 /// A specialized [`Result`] type for operations that can produce a [`FhirCoreError`].
 pub type FhirCoreResult<T> = Result<T, FhirCoreError>;
 
