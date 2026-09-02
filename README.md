@@ -1,5 +1,6 @@
 # fhir-core
 
+[![CI](https://github.com/Revanthshalon/fhir-core/actions/workflows/ci.yml/badge.svg)](https://github.com/Revanthshalon/fhir-core/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/fhir-core.svg)](https://crates.io/crates/fhir-core)
 [![Documentation](https://docs.rs/fhir-core/badge.svg)](https://docs.rs/fhir-core)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)

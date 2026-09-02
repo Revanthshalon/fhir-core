@@ -5,14 +5,14 @@ use super::*;
 #[test]
 fn test_new_and_accessors() {
     let b_true = Boolean::new(true);
-    assert_eq!(b_true.as_bool(), true);
+    assert!(b_true.as_bool());
     assert_eq!(b_true.as_str(), "true");
-    assert_eq!(b_true.into_inner(), true);
+    assert!(b_true.into_inner());
 
     let b_false = Boolean::new(false);
-    assert_eq!(b_false.as_bool(), false);
+    assert!(!b_false.as_bool());
     assert_eq!(b_false.as_str(), "false");
-    assert_eq!(b_false.into_inner(), false);
+    assert!(!b_false.into_inner());
 }
 
 #[test]
@@ -21,7 +21,7 @@ fn test_from_and_into_bool() {
     assert_eq!(b, Boolean::new(true));
 
     let val: bool = b.into();
-    assert_eq!(val, true);
+    assert!(val);
 }
 
 #[test]

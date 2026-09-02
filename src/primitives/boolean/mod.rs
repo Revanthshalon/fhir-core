@@ -40,7 +40,9 @@ mod test;
 /// let invalid = Boolean::try_from("yes");
 /// assert!(invalid.is_err());
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
+)]
 #[serde(transparent)]
 pub struct Boolean(bool);
 

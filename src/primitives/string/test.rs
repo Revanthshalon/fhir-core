@@ -6,18 +6,42 @@ use super::*;
 fn test_valid_strings() {
     assert_eq!(FhirString::validate("Hello World"), Ok(()));
     assert_eq!(FhirString::validate("Simple text with 123!"), Ok(()));
-    assert_eq!(FhirString::validate("Leading and trailing spaces are fine:   hello   "), Ok(()));
-    assert_eq!(FhirString::validate("Contains\ttab,\nnewline,\rand carriage return"), Ok(()));
-    assert_eq!(FhirString::validate("Unicode: 🚀 é ñ 漢字 مرحبا 🌍"), Ok(()));
+    assert_eq!(
+        FhirString::validate("Leading and trailing spaces are fine:   hello   "),
+        Ok(())
+    );
+    assert_eq!(
+        FhirString::validate("Contains\ttab,\nnewline,\rand carriage return"),
+        Ok(())
+    );
+    assert_eq!(
+        FhirString::validate("Unicode: 🚀 é ñ 漢字 مرحبا 🌍"),
+        Ok(())
+    );
 }
 
 #[test]
 fn test_empty_and_whitespace_only() {
-    assert_eq!(FhirString::validate(""), Err(StringError::EmptyOrWhitespaceOnly));
-    assert_eq!(FhirString::validate("   "), Err(StringError::EmptyOrWhitespaceOnly));
-    assert_eq!(FhirString::validate("\t\t"), Err(StringError::EmptyOrWhitespaceOnly));
-    assert_eq!(FhirString::validate("\n\r\n"), Err(StringError::EmptyOrWhitespaceOnly));
-    assert_eq!(FhirString::validate(" \t \n \r "), Err(StringError::EmptyOrWhitespaceOnly));
+    assert_eq!(
+        FhirString::validate(""),
+        Err(StringError::EmptyOrWhitespaceOnly)
+    );
+    assert_eq!(
+        FhirString::validate("   "),
+        Err(StringError::EmptyOrWhitespaceOnly)
+    );
+    assert_eq!(
+        FhirString::validate("\t\t"),
+        Err(StringError::EmptyOrWhitespaceOnly)
+    );
+    assert_eq!(
+        FhirString::validate("\n\r\n"),
+        Err(StringError::EmptyOrWhitespaceOnly)
+    );
+    assert_eq!(
+        FhirString::validate(" \t \n \r "),
+        Err(StringError::EmptyOrWhitespaceOnly)
+    );
 }
 
 #[test]
