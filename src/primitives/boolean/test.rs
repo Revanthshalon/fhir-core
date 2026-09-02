@@ -139,3 +139,37 @@ fn test_serde_roundtrip() {
     let deserialized_false: Boolean = serde_json::from_str(&json_false).unwrap();
     assert_eq!(original_false, deserialized_false);
 }
+
+#[test]
+fn test_boolean_negative_case_sensitivity() {
+    assert!(Boolean::try_from("True").is_err());
+    assert!(Boolean::try_from("TRUE").is_err());
+    assert!(Boolean::try_from("tRuE").is_err());
+    assert!(Boolean::try_from("False").is_err());
+    assert!(Boolean::try_from("FALSE").is_err());
+    assert!(Boolean::try_from("fAlSe").is_err());
+}
+
+#[test]
+fn test_boolean_negative_whitespace_wrapping() {
+    assert!(Boolean::try_from(" true").is_err());
+    assert!(Boolean::try_from("true ").is_err());
+    assert!(Boolean::try_from(" true ").is_err());
+    assert!(Boolean::try_from("\ttrue\n").is_err());
+    assert!(Boolean::try_from(" false").is_err());
+    assert!(Boolean::try_from("false ").is_err());
+}
+
+#[test]
+fn test_boolean_negative_falsy_truthy_representations() {
+    assert!(Boolean::try_from("1").is_err());
+    assert!(Boolean::try_from("0").is_err());
+    assert!(Boolean::try_from("yes").is_err());
+    assert!(Boolean::try_from("no").is_err());
+    assert!(Boolean::try_from("t").is_err());
+    assert!(Boolean::try_from("f").is_err());
+    assert!(Boolean::try_from("y").is_err());
+    assert!(Boolean::try_from("n").is_err());
+    assert!(Boolean::try_from("null").is_err());
+    assert!(Boolean::try_from("undefined").is_err());
+}

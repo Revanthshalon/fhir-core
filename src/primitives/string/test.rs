@@ -253,3 +253,53 @@ fn test_string_error_display_formatting() {
         "character count (1048577) exceeds maximum allowed (1048576)"
     );
 }
+
+#[test]
+fn test_string_control_character_boundaries() {
+    // Exact boundaries around allowed control characters (\t=9, \n=10, \r=13):
+    assert!(FhirString::validate("a\u{0008}b").is_err()); // 8: Backspace (disallowed)
+    assert!(FhirString::validate("a\u{0009}b").is_ok()); // 9: Tab (allowed)
+    assert!(FhirString::validate("a\u{000A}b").is_ok()); // 10: Line Feed (allowed)
+    assert!(FhirString::validate("a\u{000B}b").is_err()); // 11: Vertical Tab (disallowed)
+    assert!(FhirString::validate("a\u{000C}b").is_err()); // 12: Form Feed (disallowed)
+    assert!(FhirString::validate("a\u{000D}b").is_ok()); // 13: Carriage Return (allowed)
+    assert!(FhirString::validate("a\u{000E}b").is_err()); // 14: Shift Out (disallowed)
+    assert!(FhirString::validate("a\u{001F}b").is_err()); // 31: Unit Separator (disallowed)
+    assert!(FhirString::validate("a\u{0020}b").is_ok()); // 32: Space (allowed)
+}
+
+#[test]
+fn test_string_unicode_whitespace_only_rejection() {
+    // Non-breaking space (U+00A0)
+    assert_eq!(
+        FhirString::validate("\u{00A0}"),
+        Err(StringError::EmptyOrWhitespaceOnly)
+    );
+    // Em space (U+2003)
+    assert_eq!(
+        FhirString::validate("\u{2003}\u{2003}"),
+        Err(StringError::EmptyOrWhitespaceOnly)
+    );
+    // Ideographic space (U+3000)
+    assert_eq!(
+        FhirString::validate("\u{3000}"),
+        Err(StringError::EmptyOrWhitespaceOnly)
+    );
+}
+
+#[test]
+fn test_string_valid_whitespace_wrapping() {
+    // Single non-whitespace character wrapped in various allowed whitespaces
+    assert!(FhirString::validate(" a ").is_ok());
+    assert!(FhirString::validate("\t\n\r z \r\n\t").is_ok());
+    assert!(FhirString::validate("\u{00A0}word\u{00A0}").is_ok());
+}
+
+#[test]
+fn test_string_multibyte_character_count_vs_byte_length() {
+    // 4-byte emoji: 10 characters = 40 bytes, but character count is 10 (well within MAX_LENGTH)
+    let s = "🦀".repeat(10);
+    assert_eq!(s.len(), 40);
+    assert_eq!(s.chars().count(), 10);
+    assert!(FhirString::validate(&s).is_ok());
+}

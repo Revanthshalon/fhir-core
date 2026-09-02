@@ -210,3 +210,74 @@ fn test_base64_error_display_formatting() {
         "invalid padded block: requires at least 2 data characters before padding"
     );
 }
+
+#[test]
+fn test_base64_negative_whitespace_rejection() {
+    assert!(Base64Binary::validate(" TWFu").is_err());
+    assert!(Base64Binary::validate("TWFu ").is_err());
+    assert!(Base64Binary::validate("TW Fu").is_err());
+    assert!(Base64Binary::validate("TW\nFu").is_err());
+    assert!(Base64Binary::validate("TW\tFu").is_err());
+    assert!(Base64Binary::validate("TW\rFu").is_err());
+}
+
+#[test]
+fn test_base64_negative_url_safe_and_symbols() {
+    // URL-safe '-' and '_' are not allowed in standard RFC 4648 Base64
+    assert!(Base64Binary::validate("TW-u").is_err());
+    assert!(Base64Binary::validate("TW_u").is_err());
+    assert!(Base64Binary::validate("TW.u").is_err());
+    assert!(Base64Binary::validate("TW!u").is_err());
+    assert!(Base64Binary::validate("TW$u").is_err());
+}
+
+#[test]
+fn test_base64_negative_internal_padding() {
+    // Padding in the middle of a stream
+    assert_eq!(
+        Base64Binary::validate("TQ==TQ=="),
+        Err(Base64Error::UnexpectedPadding { index: 2 })
+    );
+    assert_eq!(
+        Base64Binary::validate("TW=u"),
+        Err(Base64Error::UnexpectedPadding { index: 2 })
+    );
+    assert_eq!(
+        Base64Binary::validate("=TWF"),
+        Err(Base64Error::UnexpectedPadding { index: 0 })
+    );
+}
+
+#[test]
+fn test_base64_negative_non_ascii() {
+    assert!(Base64Binary::validate("TWé=").is_err());
+    assert!(Base64Binary::validate("TW🦀=").is_err());
+}
+
+#[test]
+fn test_base64_negative_lengths() {
+    assert_eq!(
+        Base64Binary::validate("A"),
+        Err(Base64Error::InvalidLength(1))
+    );
+    assert_eq!(
+        Base64Binary::validate("AB"),
+        Err(Base64Error::InvalidLength(2))
+    );
+    assert_eq!(
+        Base64Binary::validate("ABC"),
+        Err(Base64Error::InvalidLength(3))
+    );
+    assert_eq!(
+        Base64Binary::validate("ABCDE"),
+        Err(Base64Error::InvalidLength(5))
+    );
+    assert_eq!(
+        Base64Binary::validate("ABCDEF"),
+        Err(Base64Error::InvalidLength(6))
+    );
+    assert_eq!(
+        Base64Binary::validate("ABCDEFG"),
+        Err(Base64Error::InvalidLength(7))
+    );
+}
