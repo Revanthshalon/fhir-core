@@ -96,15 +96,6 @@ use crate::errors::r#type::TypeError;
 #[cfg(test)]
 mod test;
 
-/// The maximum number of significant integer-part digits permitted by the FHIR `decimal` regex.
-const MAX_INTEGER_DIGITS: usize = 18;
-
-/// The maximum number of fractional-part digits permitted by the FHIR `decimal` regex.
-const MAX_FRACTION_DIGITS: usize = 17;
-
-/// The maximum number of exponent digits permitted by the FHIR `decimal` regex.
-const MAX_EXPONENT_DIGITS: usize = 9;
-
 /// Represents a FHIR `decimal` primitive data type.
 ///
 /// Wraps the exact, validated string representation of the value (see the module-level
@@ -189,6 +180,15 @@ impl fmt::Display for DecimalError {
 impl std::error::Error for DecimalError {}
 
 impl Decimal {
+    /// The maximum number of significant integer-part digits permitted by the FHIR `decimal` regex.
+    const MAX_INTEGER_DIGITS: usize = 18;
+
+    /// The maximum number of fractional-part digits permitted by the FHIR `decimal` regex.
+    const MAX_FRACTION_DIGITS: usize = 17;
+
+    /// The maximum number of exponent digits permitted by the FHIR `decimal` regex.
+    const MAX_EXPONENT_DIGITS: usize = 9;
+
     /// Returns a string slice of the underlying validated value.
     #[inline]
     pub fn as_str(&self) -> &str {
@@ -259,10 +259,10 @@ impl Decimal {
             }
         }
         let int_len = i - int_start;
-        if int_len > MAX_INTEGER_DIGITS {
+        if int_len > Self::MAX_INTEGER_DIGITS {
             return Err(DecimalError::TooManyIntegerDigits {
                 count: int_len,
-                max: MAX_INTEGER_DIGITS,
+                max: Self::MAX_INTEGER_DIGITS,
             });
         }
 
@@ -276,10 +276,10 @@ impl Decimal {
             if frac_len == 0 {
                 return Err(DecimalError::InvalidFormat);
             }
-            if frac_len > MAX_FRACTION_DIGITS {
+            if frac_len > Self::MAX_FRACTION_DIGITS {
                 return Err(DecimalError::TooManyFractionDigits {
                     count: frac_len,
-                    max: MAX_FRACTION_DIGITS,
+                    max: Self::MAX_FRACTION_DIGITS,
                 });
             }
         }
@@ -297,10 +297,10 @@ impl Decimal {
             if exp_len == 0 {
                 return Err(DecimalError::InvalidFormat);
             }
-            if exp_len > MAX_EXPONENT_DIGITS {
+            if exp_len > Self::MAX_EXPONENT_DIGITS {
                 return Err(DecimalError::TooManyExponentDigits {
                     count: exp_len,
-                    max: MAX_EXPONENT_DIGITS,
+                    max: Self::MAX_EXPONENT_DIGITS,
                 });
             }
         }
@@ -334,7 +334,9 @@ impl Decimal {
         let plain = format!("{value}");
         let unsigned = plain.strip_prefix('-').unwrap_or(&plain);
         let (int_part, frac_part) = unsigned.split_once('.').unwrap_or((unsigned, ""));
-        if int_part.len() <= MAX_INTEGER_DIGITS && frac_part.len() <= MAX_FRACTION_DIGITS {
+        if int_part.len() <= Self::MAX_INTEGER_DIGITS
+            && frac_part.len() <= Self::MAX_FRACTION_DIGITS
+        {
             plain
         } else {
             format!("{value:e}")
