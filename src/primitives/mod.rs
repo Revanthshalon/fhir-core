@@ -7,6 +7,8 @@ mod boolean;
 #[cfg(feature = "r5")]
 mod decimal;
 #[cfg(feature = "r5")]
+mod id;
+#[cfg(feature = "r5")]
 mod integer;
 #[cfg(feature = "r5")]
 mod integer64;
@@ -20,6 +22,8 @@ pub use base64::Base64Binary;
 pub use boolean::Boolean;
 #[cfg(feature = "r5")]
 pub use decimal::Decimal;
+#[cfg(feature = "r5")]
+pub use id::Id;
 #[cfg(feature = "r5")]
 pub use integer::Integer;
 #[cfg(feature = "r5")]
