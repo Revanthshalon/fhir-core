@@ -19,6 +19,8 @@ pub use base64::Base64Binary;
 #[cfg(feature = "r5")]
 pub use boolean::Boolean;
 #[cfg(feature = "r5")]
+pub use decimal::Decimal;
+#[cfg(feature = "r5")]
 pub use integer::Integer;
 #[cfg(feature = "r5")]
 pub use integer64::Integer64;
