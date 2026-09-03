@@ -216,12 +216,7 @@ impl TryFrom<String> for Id {
     type Error = TypeError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        Self::validate(&value).map_err(|e| TypeError::InvalidValue {
-            r#type: "id".to_owned(),
-            value: value.clone(),
-            error: e.to_string(),
-        })?;
-        Ok(Self(value))
+        Self::try_from(value.as_str())
     }
 }
 
