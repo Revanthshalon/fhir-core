@@ -372,13 +372,7 @@ impl TryFrom<String> for Decimal {
     /// Returns [`TypeError::InvalidValue`] if the input string does not conform to
     /// [`Decimal::validate`].
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        Self::validate(&value)
-            .map(|()| Self(value.clone()))
-            .map_err(|e| TypeError::InvalidValue {
-                r#type: "decimal".to_owned(),
-                value,
-                error: e.to_string(),
-            })
+        Self::try_from(value.as_str())
     }
 }
 
