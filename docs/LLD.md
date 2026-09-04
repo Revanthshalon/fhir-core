@@ -1,0 +1,483 @@
+# Low-Level Design (LLD): `fhir-core` Type System
+
+**Version:** 0.1.0  
+**FHIR Specification:** Release 5 (R5) — [HL7 FHIR R5](https://hl7.org/fhir/R5/)  
+**Crate Safety Invariants:** `#![forbid(unsafe_code)]`, zero non-serde runtime dependencies.
+
+---
+
+## 1. Executive Summary & Architectural Goals
+
+The `fhir-core` crate provides the foundational type system, validation logic, and data structures for Fast Healthcare Interoperability Resources (FHIR) in Rust. It serves as the bedrock upon which resource models (e.g. `Patient`, `Observation`), validation engines, and FHIRPath interpreters are constructed.
+
+### Core Design Principles
+
+1. **Spec-Driven Strictness (HL7 FHIR R5 Normative)**:
+   - Every primitive format, regex, numeric range, and structural invariant is verified directly against official HL7 FHIR R5 specifications.
+   - Validation is proactive: instances constructed through safe APIs are guaranteed to satisfy all spec invariants.
+2. **Zero-Cost & Zero-Allocation Views**:
+   - Accessors return slices (`&str`) and primitives (`f64`, `i32`, `i64`, `bool`) without cloning.
+   - Bypassable constructors (`new_unchecked`) exist for trusted sources, bulk imports, and internal parsing benchmarks.
+3. **Ergonomic Serde Integration**:
+   - Direct JSON and serde format compatibility with zero non-serde external dependencies.
+   - Correct spec handling for JSON peculiarities (e.g. `integer64` as JSON string, `decimal` preserving precision, `_propertyName` companion fields for primitive element extensions and element IDs).
+4. **Compile-Time Safety & Explicit Invariants**:
+   - `#![forbid(unsafe_code)]` enforced crate-wide.
+   - No implicit conversions that bypass domain validation (e.g., deliberate absence of `Deref<Target = str>`).
+   - Standard conversion traits: `TryFrom<&str>`, `TryFrom<String>`, `FromStr`, `Display`, and `From`/`Into` for wrapped native primitives.
+
+---
+
+## 2. Type System Hierarchy
+
+HL7 FHIR establishes an object-oriented type hierarchy starting from `Base`. In Rust, this hierarchy is modeled using traits, composable structs, and enums:
+
+```mermaid
+classDiagram
+    class Base {
+        <<trait>>
+        +type_name() &str
+    }
+    class Element {
+        <<trait>>
+        +id() Option<&Id>
+        +extension() &[Extension]
+    }
+    class BackboneElement {
+        <<trait>>
+        +modifier_extension() &[Extension]
+    }
+    class DataType {
+        <<trait>>
+    }
+    class PrimitiveType_T_ {
+        +value: Option~T~
+        +id: Option~FhirString~
+        +extension: Vec~Extension~
+    }
+    class Resource {
+        <<trait>>
+        +resource_type() &str
+        +id() Option<&Id>
+        +meta() Option<&Meta>
+    }
+    class DomainResource {
+        <<trait>>
+        +text() Option<&Narrative>
+        +contained() &[Resource]
+        +extension() &[Extension]
+        +modifier_extension() &[Extension]
+    }
+
+    Base <|-- Element
+    Base <|-- Resource
+    Element <|-- BackboneElement
+    Element <|-- DataType
+    Element <|-- PrimitiveType_T_
+    Resource <|-- DomainResource
+```
+
+### 2.1 Trait Definitions
+
+#### `Base` Trait (`src/base.rs`)
+The root abstraction for every entity in the FHIR data model.
+```rust
+/// The root trait of all FHIR elements, data types, and resources.
+pub trait Base: std::fmt::Debug + Send + Sync {
+    /// Returns the normative FHIR type name (e.g., "string", "Observation", "CodeableConcept").
+    fn type_name(&self) -> &'static str;
+}
+```
+
+#### `Element` Trait (`src/element.rs`)
+Base definition for all elements inside a FHIR resource or complex type:
+```rust
+use crate::primitives::FhirString;
+use crate::types::complex::Extension;
+
+/// Common behavior for all FHIR elements that can hold an `id` and `extension` list.
+pub trait Element: Base {
+    /// Returns the element-level identifier, if present.
+    fn element_id(&self) -> Option<&FhirString>;
+
+    /// Returns the slice of extensions attached to this element.
+    fn extensions(&self) -> &[Extension];
+}
+```
+
+#### `BackboneElement` Trait (`src/backbone.rs`)
+Defines compound elements within resources that permit `modifierExtension`:
+```rust
+use crate::element::Element;
+use crate::types::complex::Extension;
+
+/// Elements defined within resources that can modify the interpretation of parent elements.
+pub trait BackboneElement: Element {
+    /// Returns the slice of modifier extensions attached to this element.
+    fn modifier_extensions(&self) -> &[Extension];
+}
+```
+
+---
+
+## 3. The 20 FHIR R5 Primitive Types
+
+FHIR R5 defines exactly 20 primitive types. Each primitive lives in `src/primitives/<type_name>/` and implements:
+- Infallible or fallible `new(val)`
+- `new_unchecked(val)`
+- `validate(&str) -> Result<(), SpecificError>`
+- `TryFrom<&str, Error = TypeError>`, `TryFrom<String, Error = TypeError>`, `FromStr`
+- `Display`
+- `Serialize` and `Deserialize` (feature-gated on `serde`)
+
+### 3.1 Primitives Specification Matrix
+
+| Primitive | Rust Type | Representation | HL7 R5 Pattern / Invariant | Serde JSON Encoding |
+| :--- | :--- | :--- | :--- | :--- |
+| `base64Binary` | `Base64Binary` | `String` | RFC 4648 Base64: `(\s*([0-9a-zA-Z\+\=]){4}\s*)+` | JSON string |
+| `boolean` | `Boolean` | `bool` | `true \| false` | JSON boolean |
+| `canonical` | `Canonical` | `String` | RFC 3986 URI + optional `\|version` / `#frag` (`\S*`) | JSON string |
+| `code` | `Code` | `String` | `[^\s]+( [^\s]+)*` (no lead/trail ws, no multi-space) | JSON string |
+| `date` | `Date` | `String` | `YYYY`, `YYYY-MM`, or `YYYY-MM-DD` | JSON string |
+| `dateTime` | `DateTime` | `String` | `YYYY`, `YYYY-MM`, `YYYY-MM-DD`, or ISO-8601 with TZ | JSON string |
+| `decimal` | `Decimal` | `String` | `-?(0\|[1-9][0-9]{0,17})(\.[0-9]{1,17})?([eE][+-]?[0-9]{1,9})?` | JSON number |
+| `id` | `Id` | `String` | `[A-Za-z0-9\-\.]{1,64}` | JSON string |
+| `instant` | `Instant` | `String` | `YYYY-MM-DDThh:mm:ss[.sss](Z\|[+-]hh:mm)` (sec + TZ required) | JSON string |
+| `integer` | `Integer` | `i32` | `[+-]?(0\|[1-9][0-9]*)`, $-2^{31} .. 2^{31}-1$ | JSON number |
+| `integer64` | `Integer64` | `i64` | `[+-]?(0\|[1-9][0-9]*)`, $-2^{63} .. 2^{63}-1$ | **JSON string** (per spec) |
+| `markdown` | `Markdown` | `String` | `\s*(\S\|\s)*`, max 1,048,576 chars | JSON string |
+| `oid` | `Oid` | `String` | `urn:oid:[0-2](\.(0\|[1-9][0-9]*))+` | JSON string |
+| `positiveInt`| `PositiveInt`| `u32` (range $\ge 1$)| `[1-9][0-9]*`, $1 .. 2,147,483,647$ | JSON number |
+| `string` | `FhirString` | `String` | `[ \r\n\t\S]+`, max 1MB, no control chars | JSON string |
+| `time` | `Time` | `String` | `hh:mm:ss[.sss]` (leap seconds allowed) | JSON string |
+| `unsignedInt`| `UnsignedInt`| `u32` (range $\ge 0$)| `[0]\|([1-9][0-9]*)`, $0 .. 2,147,483,647$ | JSON number |
+| `uri` | `Uri` | `String` | RFC 3986 URI: `\S*` | JSON string |
+| `url` | `Url` | `String` | RFC 1738/3986 URL: `\S*` | JSON string |
+| `uuid` | `Uuid` | `String` | `urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}` | JSON string |
+
+---
+
+## 4. Primitive Element Wrapper (`Primitive<T>`) & FHIR JSON Architecture
+
+In FHIR, primitive fields are full `Element` instances. They can carry metadata (`id` and `extension`) even when the primary value is absent (e.g. data-absent-reason).
+
+### 4.1 Memory Representation
+
+```rust
+use crate::element::Element;
+use crate::base::Base;
+use crate::primitives::FhirString;
+use crate::types::complex::Extension;
+use crate::errors::r#type::TypeError;
+
+/// A wrapper representing a FHIR primitive element.
+///
+/// Implements FHIR Invariant `ele-1`: "All FHIR elements must have a @value or children".
+#[derive(Debug, Clone, PartialEq)]
+pub struct Primitive<T> {
+    /// The primary primitive value, or `None` if absent.
+    pub value: Option<T>,
+    /// Optional resource-local element identifier.
+    pub id: Option<FhirString>,
+    /// Optional list of extensions attached to this primitive.
+    pub extension: Vec<Extension>,
+}
+
+impl<T> Primitive<T> {
+    /// Creates a new `Primitive` with only a value.
+    pub fn new(value: T) -> Self {
+        Self {
+            value: Some(value),
+            id: None,
+            extension: Vec::new(),
+        }
+    }
+
+    /// Enforces FHIR Invariant `ele-1`: returns `true` if value, id, or extension is present.
+    #[inline]
+    pub fn is_valid_element(&self) -> bool {
+        self.value.is_some() || self.id.is_some() || !self.extension.is_empty()
+    }
+}
+```
+
+### 4.2 FHIR JSON Companion Underscore (`_propertyName`) Pattern
+
+In FHIR JSON:
+- Simple element: `{"gender": "male"}`
+- Element with extension: `{"gender": "male", "_gender": {"id": "g1", "extension": [...]}}`
+- Missing value with extension: `{"_gender": {"extension": [{"url": "...", "valueCode": "unknown"}]}}`
+
+#### Serialization Strategy
+1. **Direct Value Serialization**: If `id` is `None` and `extension` is empty, `Primitive<T>` serializes directly as its underlying value `T`.
+2. **Resource/Container Serialization**: Struct serializers handle splitting the value and the `_propertyName` companion object using a custom serde field attribute or helper serializer (`#[serde(with = "fhir_primitive")]`).
+
+---
+
+## 5. Foundational Complex Data Types (`src/types/complex/`)
+
+FHIR R5 defines general-purpose reusable data types. The initial core implementations include:
+
+### 5.1 `Extension`
+```rust
+use crate::base::Base;
+use crate::element::Element;
+use crate::primitives::{FhirString, Uri};
+use crate::types::choices::ExtensionValue;
+
+/// An Extension element for capturing metadata outside the standard resource model.
+///
+/// Invariant `ext-1`: "Must have either extensions or value[x], not both".
+#[derive(Debug, Clone, PartialEq)]
+pub struct Extension {
+    pub id: Option<FhirString>,
+    pub extension: Vec<Extension>,
+    pub url: Uri,
+    pub value: Option<ExtensionValue>,
+}
+```
+
+### 5.2 `Coding` & `CodeableConcept`
+```rust
+use crate::primitives::{Boolean, Code, FhirString, Uri};
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct Coding {
+    pub id: Option<FhirString>,
+    pub extension: Vec<Extension>,
+    pub system: Option<Uri>,
+    pub version: Option<FhirString>,
+    pub code: Option<Code>,
+    pub display: Option<FhirString>,
+    pub user_selected: Option<Boolean>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct CodeableConcept {
+    pub id: Option<FhirString>,
+    pub extension: Vec<Extension>,
+    pub coding: Vec<Coding>,
+    pub text: Option<FhirString>,
+}
+```
+
+### 5.3 `Identifier`
+```rust
+use crate::primitives::{Code, FhirString, Uri};
+use crate::types::complex::{CodeableConcept, Period, Reference};
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct Identifier {
+    pub id: Option<FhirString>,
+    pub extension: Vec<Extension>,
+    pub r#use: Option<Code>,
+    pub r#type: Option<CodeableConcept>,
+    pub system: Option<Uri>,
+    pub value: Option<FhirString>,
+    pub period: Option<Period>,
+    pub assigner: Option<Reference>,
+}
+```
+
+### 5.4 `Period`
+```rust
+use crate::primitives::{DateTime, FhirString};
+use crate::errors::constraints::ConstraintError;
+
+/// A time period defined by a start and end date/time.
+///
+/// Invariant `per-1`: "If present, start SHALL be <= end".
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct Period {
+    pub id: Option<FhirString>,
+    pub extension: Vec<Extension>,
+    pub start: Option<DateTime>,
+    pub end: Option<DateTime>,
+}
+
+impl Period {
+    pub fn validate_period(&self) -> Result<(), ConstraintError> {
+        if let (Some(start), Some(end)) = (&self.start, &self.end) {
+            if start.as_str() > end.as_str() {
+                return Err(ConstraintError::InvariantViolated {
+                    key: "per-1",
+                    description: "Period.start must be less than or equal to Period.end".into(),
+                });
+            }
+        }
+        Ok(())
+    }
+}
+```
+
+### 5.5 `Quantity`
+```rust
+use crate::primitives::{Code, Decimal, FhirString, Uri};
+use crate::errors::constraints::ConstraintError;
+
+/// A measured or measurable amount.
+///
+/// Invariant `qty-3`: "If a code for the unit is present, the system SHALL also be present".
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct Quantity {
+    pub id: Option<FhirString>,
+    pub extension: Vec<Extension>,
+    pub value: Option<Decimal>,
+    pub comparator: Option<Code>,
+    pub unit: Option<FhirString>,
+    pub system: Option<Uri>,
+    pub code: Option<Code>,
+}
+
+impl Quantity {
+    pub fn validate_quantity(&self) -> Result<(), ConstraintError> {
+        if self.code.is_some() && self.system.is_none() {
+            return Err(ConstraintError::InvariantViolated {
+                key: "qty-3",
+                description: "Quantity.system must be provided when Quantity.code is present".into(),
+            });
+        }
+        Ok(())
+    }
+}
+```
+
+### 5.6 `Reference`
+```rust
+use crate::primitives::{FhirString, Uri};
+use crate::types::complex::Identifier;
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct Reference {
+    pub id: Option<FhirString>,
+    pub extension: Vec<Extension>,
+    pub reference: Option<FhirString>,
+    pub r#type: Option<Uri>,
+    pub identifier: Option<Identifier>,
+    pub display: Option<FhirString>,
+}
+```
+
+---
+
+## 6. Choice Types (`[x]`) Architecture
+
+FHIR utilizes polymorphic `[x]` elements (e.g. `value[x]`, `onset[x]`). In `fhir-core`, choice types are represented as Rust tagged enums with custom serde dispatch:
+
+```rust
+use crate::primitives::*;
+
+/// Representation of `Extension.value[x]`.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ExtensionValue {
+    Base64Binary(Base64Binary),
+    Boolean(Boolean),
+    Canonical(Canonical),
+    Code(Code),
+    Date(Date),
+    DateTime(DateTime),
+    Decimal(Decimal),
+    Id(Id),
+    Instant(Instant),
+    Integer(Integer),
+    Integer64(Integer64),
+    Markdown(Markdown),
+    Oid(Oid),
+    PositiveInt(PositiveInt),
+    String(FhirString),
+    Time(Time),
+    UnsignedInt(UnsignedInt),
+    Uri(Uri),
+    Url(Url),
+    Uuid(Uuid),
+    // Complex types supported in extensions:
+    Coding(super::complex::Coding),
+    CodeableConcept(super::complex::CodeableConcept),
+    Quantity(super::complex::Quantity),
+    Period(super::complex::Period),
+    Reference(super::complex::Reference),
+}
+```
+
+---
+
+## 7. Error Handling Architecture
+
+The crate errors are structured into a 2-tier hierarchy:
+
+```mermaid
+graph TD
+    FhirCoreError --> Type[TypeError]
+    FhirCoreError --> Constraint[ConstraintError]
+    FhirCoreError --> Serialization[SerializationError]
+
+    Type --> InvalidValue["InvalidValue { type, value, error }"]
+    Constraint --> InvariantViolated["InvariantViolated { key, description }"]
+    Constraint --> Ele1["Ele1Violation { path }"]
+    Serialization --> JsonError["JsonError(serde_json::Error)"]
+```
+
+1. **`TypeError` (`src/errors/type.rs`)**:
+   - Validation failure at the single primitive/datatype level.
+2. **`ConstraintError` (`src/errors/constraints.rs`)**:
+   - Validation failure across multiple fields or invariants (`ele-1`, `ext-1`, `per-1`, `qty-3`).
+3. **`FhirCoreError` (`src/errors/mod.rs`)**:
+   - The top-level crate error enum unifying `TypeError`, `ConstraintError`, and format-specific serialization errors.
+
+---
+
+## 8. Directory Layout
+
+```
+fhir-core/
+├── Cargo.toml
+├── Makefile
+├── docs/
+│   ├── LLD.md               <-- This Document
+│   └── TDD.md               <-- Test-Driven Development Plan
+└── src/
+    ├── lib.rs
+    ├── base.rs              <-- Base trait
+    ├── element.rs           <-- Element trait & Primitive<T>
+    ├── backbone.rs          <-- BackboneElement trait
+    ├── errors/
+    │   ├── mod.rs           <-- FhirCoreError
+    │   ├── type.rs          <-- TypeError
+    │   ├── constraints.rs   <-- ConstraintError (ele-1, ext-1, etc.)
+    │   └── test.rs
+    ├── primitives/          <-- 20 FHIR R5 Primitive Types
+    │   ├── mod.rs
+    │   ├── base64/          {mod.rs, test.rs}
+    │   ├── boolean/         {mod.rs, test.rs}
+    │   ├── canonical/       {mod.rs, test.rs}
+    │   ├── code/            {mod.rs, test.rs}
+    │   ├── date/            {mod.rs, test.rs}
+    │   ├── dateTime/        {mod.rs, test.rs}
+    │   ├── decimal/         {mod.rs, test.rs}
+    │   ├── id/              {mod.rs, test.rs}
+    │   ├── instant/         {mod.rs, test.rs}
+    │   ├── integer/         {mod.rs, test.rs}
+    │   ├── integer64/       {mod.rs, test.rs}
+    │   ├── markdown/        {mod.rs, test.rs}
+    │   ├── oid/             {mod.rs, test.rs}
+    │   ├── positiveInt/     {mod.rs, test.rs}
+    │   ├── string/          {mod.rs, test.rs}
+    │   ├── time/            {mod.rs, test.rs}
+    │   ├── unsignedInt/     {mod.rs, test.rs}
+    │   ├── uri/             {mod.rs, test.rs}
+    │   ├── url/             {mod.rs, test.rs}
+    │   └── uuid/            {mod.rs, test.rs}
+    ├── types/
+    │   ├── mod.rs
+    │   ├── choices.rs       <-- Polymorphic choice types (ExtensionValue)
+    │   └── complex/         <-- General Purpose Complex Types
+    │       ├── mod.rs
+    │       ├── extension.rs
+    │       ├── coding.rs
+    │       ├── codeable_concept.rs
+    │       ├── identifier.rs
+    │       ├── period.rs
+    │       ├── quantity.rs
+    │       └── reference.rs
+    └── r5/                  <-- Future R5 Resource models
+```
