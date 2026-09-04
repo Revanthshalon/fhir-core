@@ -217,6 +217,71 @@ fn test_serialize_primitive_splits_into_companion() {
     let serialized = serde_json::to_string(&container).unwrap();
 
     assert!(serialized.contains(r#""gender":"male""#));
+### 4.4 Trait Hierarchy & Interface Conformance Tests
+
+To prevent drift in the FHIR type hierarchy, tests explicitly assert compile-time and runtime trait bounds:
+
+```rust
+#[test]
+fn test_datatype_hierarchy_trait_bounds() {
+    fn assert_is_datatype<T: DataType + Element + Base>() {}
+    fn assert_is_primitive_type<T: PrimitiveType + DataType + Element + Base>() {}
+    fn assert_is_backbone_type<T: BackboneType + DataType + Element + Base>() {}
+
+    // Primitive<T> satisfies PrimitiveType and DataType
+    assert_is_primitive_type::<Primitive<FhirString>>();
+}
+
+#[test]
+fn test_resource_hierarchy_trait_bounds() {
+    fn assert_is_resource<T: Resource + Base>() {}
+    fn assert_is_domain_resource<T: DomainResource + Resource + Base>() {}
+    fn assert_is_canonical_resource<T: CanonicalResource + DomainResource + Resource + Base>() {}
+    fn assert_is_metadata_resource<T: MetadataResource + CanonicalResource + DomainResource + Resource + Base>() {}
+}
+```
+
+---
+
+## 5. Serde Companion Underscore (`_propertyName`) Test Suite
+
+FHIR primitive values are separated into the raw value and an underscore companion object when extensions or element IDs exist.
+
+#### Test Cases (`tests/serde_primitive_companion.rs`):
+```rust
+#[test]
+fn test_deserialize_primitive_with_companion_extension() {
+    let json_data = r#"{
+        "gender": "male",
+        "_gender": {
+            "id": "gender-id-1",
+            "extension": [
+                {
+                    "url": "http://hl7.org/fhir/StructureDefinition/rendered-value",
+                    "valueString": "Male"
+                }
+            ]
+        }
+    }"#;
+
+    // Deserialization maps "gender" and "_gender" into a single Primitive<Code> field:
+    let parsed: PatientGenderContainer = serde_json::from_str(json_data).unwrap();
+    assert_eq!(parsed.gender.value.as_ref().unwrap().as_str(), "male");
+    assert_eq!(parsed.gender.id.as_ref().unwrap().as_str(), "gender-id-1");
+    assert_eq!(parsed.gender.extension.len(), 1);
+}
+
+#[test]
+fn test_serialize_primitive_splits_into_companion() {
+    let element = Primitive {
+        value: Some(Code::new("male").unwrap()),
+        id: Some(FhirString::new("gender-id-1").unwrap()),
+        extension: Vec::new(),
+    };
+    let container = PatientGenderContainer { gender: element };
+    let serialized = serde_json::to_string(&container).unwrap();
+
+    assert!(serialized.contains(r#""gender":"male""#));
     assert!(serialized.contains(r#""_gender":{"id":"gender-id-1"}"#));
 }
 ```
@@ -230,27 +295,30 @@ gantt
     title FHIR Core Type System Implementation Roadmap
     dateFormat  YYYY-MM-DD
     section Phase 1: Foundations
-    Traits (Base, Element, BackboneElement)      :p1_1, 2026-09-05, 2d
-    Error Hierarchy (ConstraintError, TypeError) :p1_2, after p1_1, 2d
+    Traits (Base, Element, DataType, Backbone, Resource, Metadata) :p1_1, 2026-09-05, 2d
+    Error Hierarchy (ConstraintError, TypeError)                    :p1_2, after p1_1, 2d
     section Phase 2: Primitives
-    Temporal Primitives (date, dateTime, instant, time) :p2_1, after p1_2, 3d
-    Numeric & Identity Primitives (posInt, unsignedInt, oid, uuid) :p2_2, after p2_1, 2d
-    URI & String Primitives (uri, url, canonical, code, markdown) :p2_3, after p2_2, 3d
+    Temporal Primitives (date, dateTime, instant, time)            :p2_1, after p1_2, 3d
+    Numeric & Identity Primitives (posInt, unsignedInt, oid, uuid)  :p2_2, after p2_1, 2d
+    URI & String Primitives (uri, url, canonical, code, markdown)  :p2_3, after p2_2, 3d
     section Phase 3: Element Architecture
-    Primitive<T> Wrapper & Serde Companion Handling :p3_1, after p2_3, 4d
-    Invariant ele-1 Enforcement :p3_2, after p3_1, 2d
+    Primitive<T> Wrapper & Serde Companion Handling                :p3_1, after p2_3, 4d
+    Invariant ele-1 Enforcement                                    :p3_2, after p3_1, 2d
     section Phase 4: Complex Types
-    Extension & Invariant ext-1 :p4_1, after p3_2, 3d
-    Coding & CodeableConcept :p4_2, after p4_1, 2d
-    Identifier, Period, Quantity, Reference :p4_3, after p4_2, 4d
+    Extension & Invariant ext-1                                    :p4_1, after p3_2, 3d
+    Coding & CodeableConcept                                       :p4_2, after p4_1, 2d
+    Identifier, Period, Quantity, Reference                        :p4_3, after p4_2, 4d
     section Phase 5: Conformance
-    Choice Types (ExtensionValue) :p5_1, after p4_3, 3d
-    HL7 JSON Conformance Test Harness :p5_2, after p5_1, 3d
+    Choice Types (ExtensionValue)                                  :p5_1, after p4_3, 3d
+    HL7 JSON Conformance Test Harness                              :p5_2, after p5_1, 3d
 ```
 
 ### Milestone Checklist:
 - [x] Primitive types: `base64Binary`, `boolean`, `decimal`, `id`, `integer`, `integer64`, `string`
-- [ ] Milestone 1: Trait system (`Base`, `Element`, `BackboneElement`) & `ConstraintError`
+- [ ] Milestone 1: Complete Trait System:
+  - Data Types: `Base`, `Element`, `BackboneElement`, `DataType`, `PrimitiveType`, `BackboneType`
+  - Resource Hierarchy: `Resource`, `DomainResource`, `CanonicalResource`, `MetadataResource`
+  - Error Hierarchy: `ConstraintError` (ele-1, ext-1, per-1, qty-3) and `FhirCoreError`
 - [ ] Milestone 2: Temporal primitives (`date`, `dateTime`, `instant`, `time`)
 - [ ] Milestone 3: Numeric & URI primitives (`positiveInt`, `unsignedInt`, `oid`, `uuid`, `uri`, `url`, `canonical`, `code`, `markdown`)
 - [ ] Milestone 4: `Primitive<T>` element wrapper with companion `_propertyName` serialization

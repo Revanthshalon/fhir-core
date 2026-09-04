@@ -29,7 +29,7 @@ mod test;
 ///
 /// # Examples
 /// ```
-/// use fhir_core::primitives::Boolean;
+/// use fhir_core::types::Boolean;
 ///
 /// let b = Boolean::new(true);
 /// assert!(b.as_bool());
@@ -51,7 +51,7 @@ impl Boolean {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Boolean;
+    /// use fhir_core::types::Boolean;
     ///
     /// let b_true = Boolean::new(true);
     /// assert!(b_true.as_bool());
@@ -68,7 +68,7 @@ impl Boolean {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Boolean;
+    /// use fhir_core::types::Boolean;
     ///
     /// let b = Boolean::new(true);
     /// assert_eq!(b.as_bool(), true);
@@ -82,7 +82,7 @@ impl Boolean {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Boolean;
+    /// use fhir_core::types::Boolean;
     ///
     /// assert_eq!(Boolean::new(true).as_str(), "true");
     /// assert_eq!(Boolean::new(false).as_str(), "false");
@@ -96,7 +96,7 @@ impl Boolean {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Boolean;
+    /// use fhir_core::types::Boolean;
     ///
     /// let b = Boolean::new(true);
     /// assert_eq!(b.into_inner(), true);

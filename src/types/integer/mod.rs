@@ -34,7 +34,7 @@ mod test;
 ///
 /// # Examples
 /// ```
-/// use fhir_core::primitives::Integer;
+/// use fhir_core::types::Integer;
 ///
 /// let i = Integer::new(42);
 /// assert_eq!(i.as_i32(), 42);
@@ -97,7 +97,7 @@ impl Integer {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Integer;
+    /// use fhir_core::types::Integer;
     ///
     /// let i = Integer::new(-7);
     /// assert_eq!(i.as_i32(), -7);
@@ -137,7 +137,7 @@ impl Integer {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Integer;
+    /// use fhir_core::types::Integer;
     ///
     /// assert_eq!(Integer::validate("0"), Ok(0));
     /// assert_eq!(Integer::validate("-42"), Ok(-42));

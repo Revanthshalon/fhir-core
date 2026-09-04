@@ -34,7 +34,7 @@ mod test;
 ///
 /// # Examples
 /// ```
-/// use fhir_core::primitives::Id;
+/// use fhir_core::types::Id;
 ///
 /// let valid = Id::new("patient-1234");
 /// assert!(valid.is_ok());
@@ -107,7 +107,7 @@ impl Id {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Id;
+    /// use fhir_core::types::Id;
     ///
     /// let id_from_str = Id::new("patient-1234").unwrap();
     /// assert_eq!(id_from_str.as_str(), "patient-1234");
@@ -143,7 +143,7 @@ impl Id {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Id;
+    /// use fhir_core::types::Id;
     ///
     /// assert!(Id::validate("abc-123.4").is_ok());
     /// assert!(Id::validate("has a space").is_err());
@@ -188,7 +188,7 @@ impl Id {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Id;
+    /// use fhir_core::types::Id;
     ///
     /// let id = Id::new_unchecked("trusted-id");
     /// assert_eq!(id.as_str(), "trusted-id");

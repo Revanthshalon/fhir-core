@@ -104,7 +104,7 @@ mod test;
 ///
 /// # Examples
 /// ```
-/// use fhir_core::primitives::Decimal;
+/// use fhir_core::types::Decimal;
 ///
 /// let d = Decimal::try_from("4.5600").unwrap();
 /// assert_eq!(d.as_str(), "4.5600");
@@ -225,7 +225,7 @@ impl Decimal {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Decimal;
+    /// use fhir_core::types::Decimal;
     ///
     /// assert!(Decimal::validate("0").is_ok());
     /// assert!(Decimal::validate("-0").is_ok());

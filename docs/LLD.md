@@ -38,29 +38,47 @@ classDiagram
         <<trait>>
         +type_name() &str
     }
+
     class Element {
         <<trait>>
-        +id() Option<&Id>
-        +extension() &[Extension]
+        +element_id() Option<&FhirString>
+        +extensions() &[Extension]
     }
+
     class BackboneElement {
         <<trait>>
-        +modifier_extension() &[Extension]
+        +modifier_extensions() &[Extension]
     }
+
     class DataType {
         <<trait>>
     }
-    class PrimitiveType_T_ {
+
+    class PrimitiveType {
+        <<trait>>
+        +as_primitive_any() &dyn Any
+    }
+
+    class BackboneType {
+        <<trait>>
+        +modifier_extensions() &[Extension]
+    }
+
+    class Primitive_T_ {
         +value: Option~T~
         +id: Option~FhirString~
         +extension: Vec~Extension~
     }
+
     class Resource {
         <<trait>>
         +resource_type() &str
         +id() Option<&Id>
         +meta() Option<&Meta>
+        +implicit_rules() Option<&Uri>
+        +language() Option<&Code>
     }
+
     class DomainResource {
         <<trait>>
         +text() Option<&Narrative>
@@ -69,17 +87,46 @@ classDiagram
         +modifier_extension() &[Extension]
     }
 
+    class CanonicalResource {
+        <<trait>>
+        +url() Option<&Uri>
+        +version() Option<&FhirString>
+        +name() Option<&FhirString>
+        +title() Option<&FhirString>
+        +status() &Code
+        +experimental() Option<&Boolean>
+        +date() Option<&DateTime>
+        +publisher() Option<&FhirString>
+        +description() Option<&Markdown>
+    }
+
+    class MetadataResource {
+        <<trait>>
+        +approval_date() Option<&Date>
+        +last_review_date() Option<&Date>
+        +effective_period() Option<&Period>
+    }
+
+    %% Data Type Hierarchy (Normative FHIR R5)
     Base <|-- Element
-    Base <|-- Resource
     Element <|-- BackboneElement
     Element <|-- DataType
-    Element <|-- PrimitiveType_T_
+    DataType <|-- PrimitiveType
+    DataType <|-- BackboneType
+    PrimitiveType <|.. Primitive_T_
+
+    %% Resource Hierarchy (Normative FHIR R5)
+    Base <|-- Resource
     Resource <|-- DomainResource
+    DomainResource <|-- CanonicalResource
+    CanonicalResource <|-- MetadataResource
 ```
 
 ### 2.1 Trait Definitions
 
-#### `Base` Trait (`src/base.rs`)
+#### 2.1.1 Base & Element Family (`src/base.rs`, `src/element.rs`, `src/backbone.rs`, `src/datatype.rs`)
+
+##### `Base` Trait (`src/base.rs`)
 The root abstraction for every entity in the FHIR data model.
 ```rust
 /// The root trait of all FHIR elements, data types, and resources.
@@ -89,7 +136,7 @@ pub trait Base: std::fmt::Debug + Send + Sync {
 }
 ```
 
-#### `Element` Trait (`src/element.rs`)
+##### `Element` Trait (`src/element.rs`)
 Base definition for all elements inside a FHIR resource or complex type:
 ```rust
 use crate::primitives::FhirString;
@@ -105,8 +152,8 @@ pub trait Element: Base {
 }
 ```
 
-#### `BackboneElement` Trait (`src/backbone.rs`)
-Defines compound elements within resources that permit `modifierExtension`:
+##### `BackboneElement` Trait (`src/backbone.rs`)
+Defines compound elements within resources (not data types) that permit `modifierExtension`:
 ```rust
 use crate::element::Element;
 use crate::types::complex::Extension;
@@ -115,6 +162,137 @@ use crate::types::complex::Extension;
 pub trait BackboneElement: Element {
     /// Returns the slice of modifier extensions attached to this element.
     fn modifier_extensions(&self) -> &[Extension];
+}
+```
+
+##### `DataType` Trait (`src/datatype.rs`)
+The base definition for all reusable data types defined in the FHIR specification:
+```rust
+use crate::element::Element;
+
+/// Marker/common trait for all FHIR reusable data types.
+pub trait DataType: Element {}
+```
+
+##### `PrimitiveType` Trait (`src/datatype.rs`)
+Specialization of `DataType` for types that carry a simple primitive value alongside optional `id` and `extension`:
+```rust
+use crate::datatype::DataType;
+
+/// A reusable data type specializing `DataType` that holds a primitive value.
+pub trait PrimitiveType: DataType {
+    /// Returns true if this primitive element has a populated value.
+    fn has_value(&self) -> bool;
+}
+```
+
+##### `BackboneType` Trait (`src/datatype.rs`)
+The base definition for complex data types permitted to carry `modifierExtension` (e.g. `Timing.repeat`, `Dosage.doseAndRate`):
+```rust
+use crate::datatype::DataType;
+use crate::types::complex::Extension;
+
+/// Data types permitted to carry modifier extensions within reusable types.
+pub trait BackboneType: DataType {
+    /// Returns the slice of modifier extensions attached to this data type.
+    fn modifier_extensions(&self) -> &[Extension];
+}
+```
+
+#### 2.1.2 Resource Hierarchy Traits (`src/resource.rs`)
+
+##### `Resource` Trait
+The abstract base for all FHIR resources:
+```rust
+use crate::base::Base;
+use crate::primitives::{Code, Id, Uri};
+
+/// Root trait for all top-level FHIR resource instances.
+pub trait Resource: Base {
+    /// The normative FHIR resource type (e.g. "Patient", "Observation", "StructureDefinition").
+    fn resource_type(&self) -> &'static str;
+
+    /// The logical id of the resource.
+    fn id(&self) -> Option<&Id>;
+
+    /// Implicit rules URL under which the resource was created.
+    fn implicit_rules(&self) -> Option<&Uri>;
+
+    /// Base language of the resource.
+    fn language(&self) -> Option<&Code>;
+}
+```
+
+##### `DomainResource` Trait
+Specialization of `Resource` adding clinical narrative, contained resources, extensions, and modifier extensions:
+```rust
+use crate::resource::Resource;
+use crate::types::complex::Extension;
+
+/// A resource with narrative, extensions, and contained resources.
+pub trait DomainResource: Resource {
+    /// Slice of standard extensions attached to the resource.
+    fn extensions(&self) -> &[Extension];
+
+    /// Slice of modifier extensions attached to the resource.
+    fn modifier_extensions(&self) -> &[Extension];
+}
+```
+
+##### `CanonicalResource` Trait
+Common interface for conformance and knowledge resources identified by a canonical URL (e.g. `StructureDefinition`, `ValueSet`, `CodeSystem`):
+```rust
+use crate::domain_resource::DomainResource;
+use crate::primitives::{Boolean, Code, DateTime, FhirString, Markdown, Uri};
+
+/// Common interface for resources that possess a canonical URL.
+pub trait CanonicalResource: DomainResource {
+    /// Canonical identifier for this resource, represented as a URI.
+    fn url(&self) -> Option<&Uri>;
+
+    /// Business version of the resource.
+    fn version(&self) -> Option<&FhirString>;
+
+    /// Computer-friendly name of the resource.
+    fn name(&self) -> Option<&FhirString>;
+
+    /// Human-friendly title of the resource.
+    fn title(&self) -> Option<&FhirString>;
+
+    /// Publication status (`draft` | `active` | `retired` | `unknown`).
+    fn status(&self) -> &Code;
+
+    /// For testing purposes, not real usage.
+    fn experimental(&self) -> Option<&Boolean>;
+
+    /// Date last changed.
+    fn date(&self) -> Option<&DateTime>;
+
+    /// Name of the publisher/organization.
+    fn publisher(&self) -> Option<&FhirString>;
+
+    /// Natural language description of the canonical resource.
+    fn description(&self) -> Option<&Markdown>;
+}
+```
+
+##### `MetadataResource` Trait
+Common interface for knowledge and definition artifacts that carry extended governance and lifecycle metadata:
+```rust
+use crate::canonical_resource::CanonicalResource;
+use crate::primitives::Date;
+use crate::types::complex::Period;
+
+/// Common interface for knowledge artifacts carrying publication and review metadata.
+pub trait MetadataResource: CanonicalResource {
+    /// The date on which the resource content was approved by the publisher.
+    fn approval_date(&self) -> Option<&Date>;
+
+    /// The date on which the resource content was last reviewed.
+    fn last_review_date(&self) -> Option<&Date>;
+
+    /// The period during which the metadata resource content was or is planned to be effective.
+    fn effective_period(&self) -> Option<&Period>;
 }
 ```
 

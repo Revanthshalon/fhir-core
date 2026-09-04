@@ -61,9 +61,20 @@ The system is decomposed into five primary subsystems:
 ```mermaid
 graph LR
     subgraph TypeSystem [1. Type System Subsystem]
-        Base[Base Trait]
-        Elem[Element Trait]
-        Backbone[BackboneElement Trait]
+        direction TB
+        subgraph DataTypesBranch [Data Types Hierarchy]
+            Base[Base Trait] --> Elem[Element Trait]
+            Elem --> BackboneElem[BackboneElement Trait]
+            Elem --> DataT[DataType Trait]
+            DataT --> PrimT[PrimitiveType Trait]
+            DataT --> BackboneT[BackboneType Trait]
+        end
+        subgraph ResourceBranch [Resource Hierarchy]
+            Base --> Res[Resource Trait]
+            Res --> DomRes[DomainResource Trait]
+            DomRes --> CanonRes[CanonicalResource Trait]
+            CanonRes --> MetaRes[MetadataResource Trait]
+        end
     end
 
     subgraph PrimitivesEngine [2. Primitives Subsystem]
@@ -93,7 +104,8 @@ graph LR
         Qty3[qty-3 Check]
     end
 
-    TypeSystem --> PrimitivesEngine
+    PrimT --> PrimWrap
+    PrimWrap --> PrimitivesEngine
     TypeSystem --> ElementModel
     ElementModel --> ComplexTypes
     ComplexTypes --> InvariantsEngine
@@ -101,9 +113,20 @@ graph LR
 
 ### 3.1 Subsystem Responsibilities
 
-1. **Type System Subsystem (`src/base.rs`, `src/element.rs`, `src/backbone.rs`)**:
-   - Defines the universal interface traits: [`Base`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#21-trait-definitions), [`Element`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#element-trait-srcelementrs), and [`BackboneElement`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#backboneelement-trait-srcbackboners).
-   - Provides runtime type identification (`type_name()`) for FHIRPath and reflective operations.
+1. **Type System Subsystem (`src/base.rs`, `src/element.rs`, `src/backbone.rs`, `src/datatype.rs`, `src/resource.rs`)**:
+   - **Data Types Hierarchy**:
+     - [`Base`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#211-base--element-family-srcbasers-srcelementrs-srcbackboners-srcdatatypers): Root interface for all FHIR entities.
+     - [`Element`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#element-trait-srcelementrs): Foundation for all elements, introducing optional `id` and `extension`.
+     - [`BackboneElement`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#backboneelement-trait-srcbackboners): Specialized compound elements defined within resources that allow `modifierExtension`.
+     - [`DataType`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#datatype-trait-srcdatatypers): Base for all reusable data types.
+     - [`PrimitiveType`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#primitivetype-trait-srcdatatypers): Direct subtype of `DataType` that holds primitive values (e.g. `Primitive<T>`).
+     - [`BackboneType`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#backbonetype-trait-srcdatatypers): Direct subtype of `DataType` permitting `modifierExtension` within reusable complex types (e.g. `Timing.repeat`).
+   - **Resource Hierarchy**:
+     - [`Resource`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#resource-trait): Root interface for top-level resources (`id`, `meta`, `implicitRules`, `language`).
+     - [`DomainResource`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#domainresource-trait): Adds narrative (`text`), `contained` resources, `extension`, and `modifierExtension`.
+     - [`CanonicalResource`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#canonicalresource-trait): Common interface for resources with a canonical URL (`url`, `version`, `status`, etc.).
+     - [`MetadataResource`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#metadataresource-trait): Common interface extending `CanonicalResource` for definition and knowledge artifacts with lifecycle governance (`approvalDate`, `lastReviewDate`, `effectivePeriod`, `topic`, `author`, `editor`, `reviewer`, `endorser`, `relatedArtifact`).
+   - Provides runtime type identification (`type_name()`) for reflective and FHIRPath operations.
 2. **Primitives Subsystem (`src/primitives/`)**:
    - Encapsulates the 20 normative FHIR R5 primitive types.
    - Enforces construction-time invariants using zero-allocation character inspection.

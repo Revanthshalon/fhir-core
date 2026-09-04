@@ -41,7 +41,7 @@ mod test;
 ///
 /// # Examples
 /// ```
-/// use fhir_core::primitives::FhirString;
+/// use fhir_core::types::FhirString;
 ///
 /// let valid = FhirString::new("Hello, FHIR!");
 /// assert!(valid.is_ok());
@@ -126,7 +126,7 @@ impl FhirString {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::FhirString;
+    /// use fhir_core::types::FhirString;
     ///
     /// // From a string slice (&str)
     /// let s_from_str = FhirString::new("Patient Name").unwrap();
@@ -164,7 +164,7 @@ impl FhirString {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::FhirString;
+    /// use fhir_core::types::FhirString;
     ///
     /// assert!(FhirString::validate("Valid content").is_ok());
     /// assert!(FhirString::validate("   ").is_err());
@@ -217,7 +217,7 @@ impl FhirString {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::FhirString;
+    /// use fhir_core::types::FhirString;
     ///
     /// let s = FhirString::new_unchecked("Trusted Value");
     /// assert_eq!(s.as_str(), "Trusted Value");

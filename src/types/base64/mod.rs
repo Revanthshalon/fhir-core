@@ -38,7 +38,7 @@ mod test;
 ///
 /// # Examples
 /// ```
-/// use fhir_core::primitives::Base64Binary;
+/// use fhir_core::types::Base64Binary;
 ///
 /// let valid = Base64Binary::new("TWFu");
 /// assert!(valid.is_ok());
@@ -118,7 +118,7 @@ impl Base64Binary {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Base64Binary;
+    /// use fhir_core::types::Base64Binary;
     ///
     /// // From a string slice (&str)
     /// let b64_from_str = Base64Binary::new("TQ==").unwrap();
@@ -155,7 +155,7 @@ impl Base64Binary {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Base64Binary;
+    /// use fhir_core::types::Base64Binary;
     ///
     /// assert!(Base64Binary::validate("TWFu").is_ok());
     /// assert!(Base64Binary::validate("TWF").is_err());
@@ -219,7 +219,7 @@ impl Base64Binary {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Base64Binary;
+    /// use fhir_core::types::Base64Binary;
     ///
     /// let b64 = Base64Binary::new_unchecked("TWFu");
     /// assert_eq!(b64.as_str(), "TWFu");

@@ -38,7 +38,7 @@ mod test;
 ///
 /// # Examples
 /// ```
-/// use fhir_core::primitives::Integer64;
+/// use fhir_core::types::Integer64;
 ///
 /// let i = Integer64::new(42);
 /// assert_eq!(i.as_i64(), 42);
@@ -111,7 +111,7 @@ impl Integer64 {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Integer64;
+    /// use fhir_core::types::Integer64;
     ///
     /// let i = Integer64::new(-7);
     /// assert_eq!(i.as_i64(), -7);
@@ -151,7 +151,7 @@ impl Integer64 {
     ///
     /// # Examples
     /// ```
-    /// use fhir_core::primitives::Integer64;
+    /// use fhir_core::types::Integer64;
     ///
     /// assert_eq!(Integer64::validate("0"), Ok(0));
     /// assert_eq!(Integer64::validate("-42"), Ok(-42));
