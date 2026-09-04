@@ -127,13 +127,13 @@ graph LR
      - [`CanonicalResource`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#canonicalresource-trait): Common interface for resources with a canonical URL (`url`, `version`, `status`, etc.).
      - [`MetadataResource`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#metadataresource-trait): Common interface extending `CanonicalResource` for definition and knowledge artifacts with lifecycle governance (`approvalDate`, `lastReviewDate`, `effectivePeriod`, `topic`, `author`, `editor`, `reviewer`, `endorser`, `relatedArtifact`).
    - Provides runtime type identification (`type_name()`) for reflective and FHIRPath operations.
-2. **Primitives Subsystem (`src/primitives/`)**:
+2. **Primitives Subsystem (`src/types/`)**:
    - Encapsulates the 20 normative FHIR R5 primitive types.
    - Enforces construction-time invariants using zero-allocation character inspection.
 3. **Element & Companion Subsystem (`src/element.rs`, `src/serde_helpers/`)**:
    - Solves the FHIR primitive/element duality via [`Primitive<T>`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#41-memory-representation).
    - Manages the splitting and merging of `propertyName` and `_propertyName` in JSON streams.
-4. **Complex Data Types Subsystem (`src/types/complex/`)**:
+4. **Complex Data Types Subsystem (`src/datatypes/complex/`)**:
    - Implements reusable multi-element data types ([`Extension`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#51-extension), [`Coding`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#52-coding--codeableconcept), [`CodeableConcept`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#52-coding--codeableconcept), [`Identifier`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#53-identifier), [`Period`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#54-period), [`Quantity`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#55-quantity), [`Reference`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#56-reference)).
    - Supports polymorphic values through tagged choice enums ([`ExtensionValue`](file:///Users/revanth/Projects/fhir-core/docs/LLD.md#6-choice-types-x-architecture)).
 5. **Invariants & Validation Engine (`src/errors/constraints.rs`)**:

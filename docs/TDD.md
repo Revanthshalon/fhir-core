@@ -20,7 +20,7 @@ In `fhir-core`, testing is not an afterthought; it is the executable specificati
 3. **Spec Invariant Validation**:
    - Invariants like `ele-1` (elements must have a value or children), `ext-1` (extensions must have value or nested extensions, not both), and `per-1` (start $\le$ end) have dedicated failure test suites.
 4. **Isolated Sibling Test Modules**:
-   - Unit tests live in a sibling `test.rs` file within the type's module directory (e.g., `src/primitives/date/test.rs`), maintaining clean separation of concerns.
+   - Unit tests live in a sibling `test.rs` file within the type's module directory (e.g., `src/types/date/test.rs`), maintaining clean separation of concerns.
 
 ---
 
@@ -129,7 +129,7 @@ fn test_ele1_primitive_with_only_extension_succeeds() {
 ### 4.2 Invariant `ext-1`: `Must have either extensions or value[x], not both`
 An `Extension` instance must contain either a choice `value` or nested `extension` children, never both.
 
-#### Test Cases (`src/types/complex/extension/test.rs`):
+#### Test Cases (`src/datatypes/complex/extension/test.rs`):
 ```rust
 #[test]
 fn test_ext1_cannot_have_both_value_and_nested_extensions() {
@@ -151,7 +151,7 @@ fn test_ext1_cannot_have_both_value_and_nested_extensions() {
 ### 4.3 Invariant `per-1`: `Period.start <= Period.end`
 A `Period` must ensure its chronological ordering.
 
-#### Test Cases (`src/types/complex/period/test.rs`):
+#### Test Cases (`src/datatypes/complex/period/test.rs`):
 ```rust
 #[test]
 fn test_per1_start_after_end_fails() {

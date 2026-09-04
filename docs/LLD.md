@@ -139,8 +139,8 @@ pub trait Base: std::fmt::Debug + Send + Sync {
 ##### `Element` Trait (`src/element.rs`)
 Base definition for all elements inside a FHIR resource or complex type:
 ```rust
-use crate::primitives::FhirString;
-use crate::types::complex::Extension;
+use crate::types::FhirString;
+use crate::datatypes::complex::Extension;
 
 /// Common behavior for all FHIR elements that can hold an `id` and `extension` list.
 pub trait Element: Base {
@@ -156,7 +156,7 @@ pub trait Element: Base {
 Defines compound elements within resources (not data types) that permit `modifierExtension`:
 ```rust
 use crate::element::Element;
-use crate::types::complex::Extension;
+use crate::datatypes::complex::Extension;
 
 /// Elements defined within resources that can modify the interpretation of parent elements.
 pub trait BackboneElement: Element {
@@ -190,7 +190,7 @@ pub trait PrimitiveType: DataType {
 The base definition for complex data types permitted to carry `modifierExtension` (e.g. `Timing.repeat`, `Dosage.doseAndRate`):
 ```rust
 use crate::datatype::DataType;
-use crate::types::complex::Extension;
+use crate::datatypes::complex::Extension;
 
 /// Data types permitted to carry modifier extensions within reusable types.
 pub trait BackboneType: DataType {
@@ -205,7 +205,7 @@ pub trait BackboneType: DataType {
 The abstract base for all FHIR resources:
 ```rust
 use crate::base::Base;
-use crate::primitives::{Code, Id, Uri};
+use crate::types::{Code, Id, Uri};
 
 /// Root trait for all top-level FHIR resource instances.
 pub trait Resource: Base {
@@ -227,7 +227,7 @@ pub trait Resource: Base {
 Specialization of `Resource` adding clinical narrative, contained resources, extensions, and modifier extensions:
 ```rust
 use crate::resource::Resource;
-use crate::types::complex::Extension;
+use crate::datatypes::complex::Extension;
 
 /// A resource with narrative, extensions, and contained resources.
 pub trait DomainResource: Resource {
@@ -243,7 +243,7 @@ pub trait DomainResource: Resource {
 Common interface for conformance and knowledge resources identified by a canonical URL (e.g. `StructureDefinition`, `ValueSet`, `CodeSystem`):
 ```rust
 use crate::domain_resource::DomainResource;
-use crate::primitives::{Boolean, Code, DateTime, FhirString, Markdown, Uri};
+use crate::types::{Boolean, Code, DateTime, FhirString, Markdown, Uri};
 
 /// Common interface for resources that possess a canonical URL.
 pub trait CanonicalResource: DomainResource {
@@ -280,8 +280,8 @@ pub trait CanonicalResource: DomainResource {
 Common interface for knowledge and definition artifacts that carry extended governance and lifecycle metadata:
 ```rust
 use crate::canonical_resource::CanonicalResource;
-use crate::primitives::Date;
-use crate::types::complex::Period;
+use crate::types::Date;
+use crate::datatypes::complex::Period;
 
 /// Common interface for knowledge artifacts carrying publication and review metadata.
 pub trait MetadataResource: CanonicalResource {
@@ -300,7 +300,7 @@ pub trait MetadataResource: CanonicalResource {
 
 ## 3. The 20 FHIR R5 Primitive Types
 
-FHIR R5 defines exactly 20 primitive types. Each primitive lives in `src/primitives/<type_name>/` and implements:
+FHIR R5 defines exactly 20 primitive types. Each primitive lives in `src/types/<type_name>/` and implements:
 - Infallible or fallible `new(val)`
 - `new_unchecked(val)`
 - `validate(&str) -> Result<(), SpecificError>`
@@ -344,8 +344,8 @@ In FHIR, primitive fields are full `Element` instances. They can carry metadata 
 ```rust
 use crate::element::Element;
 use crate::base::Base;
-use crate::primitives::FhirString;
-use crate::types::complex::Extension;
+use crate::types::FhirString;
+use crate::datatypes::complex::Extension;
 use crate::errors::r#type::TypeError;
 
 /// A wrapper representing a FHIR primitive element.
@@ -392,7 +392,7 @@ In FHIR JSON:
 
 ---
 
-## 5. Foundational Complex Data Types (`src/types/complex/`)
+## 5. Foundational Complex Data Types (`src/datatypes/complex/`)
 
 FHIR R5 defines general-purpose reusable data types. The initial core implementations include:
 
@@ -400,8 +400,8 @@ FHIR R5 defines general-purpose reusable data types. The initial core implementa
 ```rust
 use crate::base::Base;
 use crate::element::Element;
-use crate::primitives::{FhirString, Uri};
-use crate::types::choices::ExtensionValue;
+use crate::types::{FhirString, Uri};
+use crate::datatypes::choices::ExtensionValue;
 
 /// An Extension element for capturing metadata outside the standard resource model.
 ///
@@ -417,7 +417,7 @@ pub struct Extension {
 
 ### 5.2 `Coding` & `CodeableConcept`
 ```rust
-use crate::primitives::{Boolean, Code, FhirString, Uri};
+use crate::types::{Boolean, Code, FhirString, Uri};
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Coding {
@@ -441,8 +441,8 @@ pub struct CodeableConcept {
 
 ### 5.3 `Identifier`
 ```rust
-use crate::primitives::{Code, FhirString, Uri};
-use crate::types::complex::{CodeableConcept, Period, Reference};
+use crate::types::{Code, FhirString, Uri};
+use crate::datatypes::complex::{CodeableConcept, Period, Reference};
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Identifier {
@@ -459,7 +459,7 @@ pub struct Identifier {
 
 ### 5.4 `Period`
 ```rust
-use crate::primitives::{DateTime, FhirString};
+use crate::types::{DateTime, FhirString};
 use crate::errors::constraints::ConstraintError;
 
 /// A time period defined by a start and end date/time.
@@ -490,7 +490,7 @@ impl Period {
 
 ### 5.5 `Quantity`
 ```rust
-use crate::primitives::{Code, Decimal, FhirString, Uri};
+use crate::types::{Code, Decimal, FhirString, Uri};
 use crate::errors::constraints::ConstraintError;
 
 /// A measured or measurable amount.
@@ -522,8 +522,8 @@ impl Quantity {
 
 ### 5.6 `Reference`
 ```rust
-use crate::primitives::{FhirString, Uri};
-use crate::types::complex::Identifier;
+use crate::types::{FhirString, Uri};
+use crate::datatypes::complex::Identifier;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Reference {
@@ -543,7 +543,7 @@ pub struct Reference {
 FHIR utilizes polymorphic `[x]` elements (e.g. `value[x]`, `onset[x]`). In `fhir-core`, choice types are represented as Rust tagged enums with custom serde dispatch:
 
 ```rust
-use crate::primitives::*;
+use crate::types::*;
 
 /// Representation of `Extension.value[x]`.
 #[derive(Debug, Clone, PartialEq)]
@@ -569,11 +569,11 @@ pub enum ExtensionValue {
     Url(Url),
     Uuid(Uuid),
     // Complex types supported in extensions:
-    Coding(super::complex::Coding),
-    CodeableConcept(super::complex::CodeableConcept),
-    Quantity(super::complex::Quantity),
-    Period(super::complex::Period),
-    Reference(super::complex::Reference),
+    Coding(crate::datatypes::complex::Coding),
+    CodeableConcept(crate::datatypes::complex::CodeableConcept),
+    Quantity(crate::datatypes::complex::Quantity),
+    Period(crate::datatypes::complex::Period),
+    Reference(crate::datatypes::complex::Reference),
 }
 ```
 
@@ -623,7 +623,7 @@ fhir-core/
     │   ├── type.rs          <-- TypeError
     │   ├── constraints.rs   <-- ConstraintError (ele-1, ext-1, etc.)
     │   └── test.rs
-    ├── primitives/          <-- 20 FHIR R5 Primitive Types
+    ├── types/               <-- 20 FHIR R5 Primitive Types
     │   ├── mod.rs
     │   ├── base64/          {mod.rs, test.rs}
     │   ├── boolean/         {mod.rs, test.rs}
@@ -645,8 +645,10 @@ fhir-core/
     │   ├── uri/             {mod.rs, test.rs}
     │   ├── url/             {mod.rs, test.rs}
     │   └── uuid/            {mod.rs, test.rs}
-    ├── types/
+    ├── datatypes/           <-- Reusable FHIR Data Types
     │   ├── mod.rs
+    │   ├── primitive/       <-- Primitive element models
+    │   │   └── mod.rs
     │   ├── choices.rs       <-- Polymorphic choice types (ExtensionValue)
     │   └── complex/         <-- General Purpose Complex Types
     │       ├── mod.rs
