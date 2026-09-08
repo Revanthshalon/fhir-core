@@ -19,6 +19,10 @@
 //! Use [`Extension::new`] to construct a validated instance (checks `ext-1`), or
 //! [`Extension::new_unchecked`] when the fields are already known to satisfy it.
 
+use serde::de::{Error as DeError, MapAccess, Visitor};
+use serde::ser::SerializeMap;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 use crate::errors::{FhirCoreResult, constraints::ConstraintError};
 use crate::types::{
     Base64Binary, Boolean, Canonical, Code, Date, DateTime, Decimal, FhirString, Id, Instant,
@@ -87,6 +91,127 @@ pub struct Extension {
     extension: Vec<Extension>,
     url: Uri,
     value: Option<ExtensionValue>,
+}
+
+impl Serialize for Extension {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let len = usize::from(self.id.is_some())
+            + usize::from(!self.extension.is_empty())
+            + 1 // url
+            + usize::from(self.value.is_some());
+        let mut map = serializer.serialize_map(Some(len))?;
+        if let Some(id) = &self.id {
+            map.serialize_entry("id", id)?;
+        }
+        if !self.extension.is_empty() {
+            map.serialize_entry("extension", &self.extension)?;
+        }
+        map.serialize_entry("url", &self.url)?;
+        match &self.value {
+            Some(ExtensionValue::Base64Binary(v)) => map.serialize_entry("valueBase64Binary", v)?,
+            Some(ExtensionValue::Boolean(v)) => map.serialize_entry("valueBoolean", v)?,
+            Some(ExtensionValue::Canonical(v)) => map.serialize_entry("valueCanonical", v)?,
+            Some(ExtensionValue::Code(v)) => map.serialize_entry("valueCode", v)?,
+            Some(ExtensionValue::Date(v)) => map.serialize_entry("valueDate", v)?,
+            Some(ExtensionValue::DateTime(v)) => map.serialize_entry("valueDateTime", v)?,
+            Some(ExtensionValue::Decimal(v)) => map.serialize_entry("valueDecimal", v)?,
+            Some(ExtensionValue::Id(v)) => map.serialize_entry("valueId", v)?,
+            Some(ExtensionValue::Instant(v)) => map.serialize_entry("valueInstant", v)?,
+            Some(ExtensionValue::Integer(v)) => map.serialize_entry("valueInteger", v)?,
+            Some(ExtensionValue::Integer64(v)) => map.serialize_entry("valueInteger64", v)?,
+            Some(ExtensionValue::Markdown(v)) => map.serialize_entry("valueMarkdown", v)?,
+            Some(ExtensionValue::Oid(v)) => map.serialize_entry("valueOid", v)?,
+            Some(ExtensionValue::PositiveInt(v)) => map.serialize_entry("valuePositiveInt", v)?,
+            Some(ExtensionValue::String(v)) => map.serialize_entry("valueString", v)?,
+            Some(ExtensionValue::Time(v)) => map.serialize_entry("valueTime", v)?,
+            Some(ExtensionValue::UnsignedInt(v)) => map.serialize_entry("valueUnsignedInt", v)?,
+            Some(ExtensionValue::Uri(v)) => map.serialize_entry("valueUri", v)?,
+            Some(ExtensionValue::Url(v)) => map.serialize_entry("valueUrl", v)?,
+            Some(ExtensionValue::Uuid(v)) => map.serialize_entry("valueUuid", v)?,
+            None => {}
+        }
+        map.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for Extension {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct ExtensionVisitor;
+
+        impl<'de> Visitor<'de> for ExtensionVisitor {
+            type Value = Extension;
+
+            fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("a FHIR Extension JSON object")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Extension, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
+                let mut id = None;
+                let mut extension = Vec::new();
+                let mut url = None;
+                let mut value = None;
+
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
+                        "id" => id = Some(map.next_value()?),
+                        "extension" => extension = map.next_value()?,
+                        "url" => url = Some(map.next_value()?),
+                        "valueBase64Binary" => {
+                            value = Some(ExtensionValue::Base64Binary(map.next_value()?));
+                        }
+                        "valueBoolean" => value = Some(ExtensionValue::Boolean(map.next_value()?)),
+                        "valueCanonical" => {
+                            value = Some(ExtensionValue::Canonical(map.next_value()?));
+                        }
+                        "valueCode" => value = Some(ExtensionValue::Code(map.next_value()?)),
+                        "valueDate" => value = Some(ExtensionValue::Date(map.next_value()?)),
+                        "valueDateTime" => {
+                            value = Some(ExtensionValue::DateTime(map.next_value()?));
+                        }
+                        "valueDecimal" => value = Some(ExtensionValue::Decimal(map.next_value()?)),
+                        "valueId" => value = Some(ExtensionValue::Id(map.next_value()?)),
+                        "valueInstant" => value = Some(ExtensionValue::Instant(map.next_value()?)),
+                        "valueInteger" => value = Some(ExtensionValue::Integer(map.next_value()?)),
+                        "valueInteger64" => {
+                            value = Some(ExtensionValue::Integer64(map.next_value()?));
+                        }
+                        "valueMarkdown" => {
+                            value = Some(ExtensionValue::Markdown(map.next_value()?));
+                        }
+                        "valueOid" => value = Some(ExtensionValue::Oid(map.next_value()?)),
+                        "valuePositiveInt" => {
+                            value = Some(ExtensionValue::PositiveInt(map.next_value()?));
+                        }
+                        "valueString" => value = Some(ExtensionValue::String(map.next_value()?)),
+                        "valueTime" => value = Some(ExtensionValue::Time(map.next_value()?)),
+                        "valueUnsignedInt" => {
+                            value = Some(ExtensionValue::UnsignedInt(map.next_value()?));
+                        }
+                        "valueUri" => value = Some(ExtensionValue::Uri(map.next_value()?)),
+                        "valueUrl" => value = Some(ExtensionValue::Url(map.next_value()?)),
+                        "valueUuid" => value = Some(ExtensionValue::Uuid(map.next_value()?)),
+                        _ => {
+                            let _ = map.next_value::<serde::de::IgnoredAny>()?;
+                        }
+                    }
+                }
+
+                let url = url.ok_or_else(|| DeError::missing_field("url"))?;
+                Extension::new(url, id, extension, value).map_err(DeError::custom)
+            }
+        }
+
+        deserializer.deserialize_map(ExtensionVisitor)
+    }
 }
 
 impl Extension {
