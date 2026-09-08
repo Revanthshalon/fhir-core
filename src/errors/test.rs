@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use super::*;
+use crate::errors::constraints::ConstraintError;
 use crate::errors::r#type::TypeError;
 
 #[test]
@@ -25,5 +26,28 @@ fn test_fhir_core_error_source() {
         error: "cannot be empty".to_string(),
     };
     let fhir_err = FhirCoreError::from(type_err);
+    assert!(fhir_err.source().is_some());
+}
+
+#[test]
+fn test_fhir_core_error_constraint_display() {
+    let constraint_err = ConstraintError::InvariantViolated {
+        key: "ext-1",
+        description: "Must have either extensions or value[x], not both".to_string(),
+    };
+    let fhir_err = FhirCoreError::from(constraint_err);
+    assert_eq!(
+        fhir_err.to_string(),
+        "invariant 'ext-1' violated: Must have either extensions or value[x], not both"
+    );
+}
+
+#[test]
+fn test_fhir_core_error_constraint_source() {
+    let constraint_err = ConstraintError::InvariantViolated {
+        key: "ext-1",
+        description: "test".to_string(),
+    };
+    let fhir_err = FhirCoreError::from(constraint_err);
     assert!(fhir_err.source().is_some());
 }

@@ -9,6 +9,7 @@ mod test;
 /// A specialized [`Result`] type for operations that can produce a [`FhirCoreError`].
 pub type FhirCoreResult<T> = Result<T, FhirCoreError>;
 
+use constraints::ConstraintError;
 use r#type::TypeError;
 
 /// The top-level error type representing any error that can occur within `fhir-core`.
@@ -16,12 +17,15 @@ use r#type::TypeError;
 pub enum FhirCoreError {
     /// An error related to FHIR primitive or complex type validation.
     Type(TypeError),
+    /// A violated multi-field FHIR invariant (e.g. `ext-1`).
+    Constraint(ConstraintError),
 }
 
 impl std::fmt::Display for FhirCoreError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             FhirCoreError::Type(type_error) => type_error.fmt(f),
+            FhirCoreError::Constraint(constraint_error) => constraint_error.fmt(f),
         }
     }
 }
@@ -30,6 +34,7 @@ impl std::error::Error for FhirCoreError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             FhirCoreError::Type(type_error) => Some(type_error),
+            FhirCoreError::Constraint(constraint_error) => Some(constraint_error),
         }
     }
 }
@@ -37,5 +42,11 @@ impl std::error::Error for FhirCoreError {
 impl From<TypeError> for FhirCoreError {
     fn from(value: TypeError) -> Self {
         Self::Type(value)
+    }
+}
+
+impl From<ConstraintError> for FhirCoreError {
+    fn from(value: ConstraintError) -> Self {
+        Self::Constraint(value)
     }
 }
