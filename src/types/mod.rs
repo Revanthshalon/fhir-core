@@ -31,6 +31,8 @@ mod time;
 #[cfg(feature = "r5")]
 mod unsigned_int;
 #[cfg(feature = "r5")]
+mod uri;
+#[cfg(feature = "r5")]
 mod uuid;
 
 // Re-exports
@@ -64,5 +66,7 @@ pub use string::FhirString;
 pub use time::Time;
 #[cfg(feature = "r5")]
 pub use unsigned_int::UnsignedInt;
+#[cfg(feature = "r5")]
+pub use uri::Uri;
 #[cfg(feature = "r5")]
 pub use uuid::Uuid;
