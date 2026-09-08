@@ -61,7 +61,7 @@ type first needs them (see LLD.md §4), not ahead of time.
 | `unsignedInt`| Complete | `0`, `1`, `2147483647`, `"0"`, `"1"` | `-1`, `"-0"`, `"+0"`, `"01"`, `2147483648`, `""` |
 | `uri` | Pending | `"http://example.org"`, `"urn:uuid:123"`, `"/relative/path"`, `""` | Internal whitespace |
 | `url` | Pending | `"http://example.org/index.html"`, `"https://fhir.org"`, `""` | Internal whitespace, non-URL characters |
-| `uuid` | Pending | `"urn:uuid:c707a726-25f0-466d-9788-b2ef562d4e78"` | Upper case (`"urn:uuid:C707..."`), missing `"urn:uuid:"` prefix |
+| `uuid` | Complete | `"urn:uuid:c707a726-25f0-466d-9788-b2ef562d4e78"` | Upper case (`"urn:uuid:C707..."`), missing `"urn:uuid:"` prefix |
 
 ---
 
@@ -69,11 +69,10 @@ type first needs them (see LLD.md §4), not ahead of time.
 
 Straight list, no dates — one primitive at a time, `make check` green before moving on:
 
-1. `uuid`
-2. `uri`
-3. `url`
-4. `canonical`
-5. `markdown`
+1. `uri`
+2. `url`
+3. `canonical`
+4. `markdown`
 
 After all 20 primitives are done: pick the first real complex-type consumer (likely
 `Extension`) and design only the trait/wrapper surface it needs — see LLD.md §4. Not

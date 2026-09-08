@@ -71,7 +71,7 @@ Every primitive in `src/types/<type_name>/` follows the same shape (see
 | `unsignedInt`| `UnsignedInt`| `u32` (range $\ge 0$)| `[0]\|([1-9][0-9]*)`, $0..2147483647$ | JSON number | Complete |
 | `uri` | `Uri` | `String` | RFC 3986 URI: `\S*`, empty allowed | JSON string | Pending |
 | `url` | `Url` | `String` | RFC 1738/3986 URL: `\S*`, empty allowed | JSON string | Pending |
-| `uuid` | `Uuid` | `String` | `urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}` | JSON string | Pending |
+| `uuid` | `Uuid` | `String` | `urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}` | JSON string | Complete |
 
 Every regex/range above must be re-verified against hl7.org/fhir/R5/datatypes.html
 before implementing — this table is a working reference, not a substitute for the
@@ -145,6 +145,7 @@ fhir-core/
     │   ├── string/            {mod.rs, test.rs}   Complete
     │   ├── time/              {mod.rs, test.rs}   Complete
     │   ├── unsigned_int/      {mod.rs, test.rs}   Complete (FHIR `unsignedInt`)
-    │   └── (6 remaining: canonical, markdown, uri, url, uuid)
+    │   ├── uuid/              {mod.rs, test.rs}   Complete
+    │   └── (5 remaining: canonical, markdown, uri, url)
     └── r5/                    <-- placeholder for future resource models
 ```
