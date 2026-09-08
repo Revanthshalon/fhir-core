@@ -21,6 +21,8 @@ mod integer;
 #[cfg(feature = "r5")]
 mod integer64;
 #[cfg(feature = "r5")]
+mod positive_int;
+#[cfg(feature = "r5")]
 mod string;
 #[cfg(feature = "r5")]
 mod time;
@@ -46,6 +48,8 @@ pub use instant::Instant;
 pub use integer::Integer;
 #[cfg(feature = "r5")]
 pub use integer64::Integer64;
+#[cfg(feature = "r5")]
+pub use positive_int::PositiveInt;
 #[cfg(feature = "r5")]
 pub use string::FhirString;
 #[cfg(feature = "r5")]
