@@ -67,7 +67,7 @@ Every primitive in `src/types/<type_name>/` follows the same shape (see
 | `markdown` | `Markdown` | `String` | Reuses `string`'s pattern (`[ \r\n\t\S]+`), max 1,048,576 chars | JSON string | Pending |
 | `oid` | `Oid` | `String` | `urn:oid:[0-2](\.(0\|[1-9][0-9]*))+` | JSON string | Pending |
 | `positiveInt`| `PositiveInt`| `u32` (range $\ge 1$)| `[1-9][0-9]*`, $1..2147483647$ | JSON number | Pending |
-| `time` | `Time` | `String` | `hh:mm:ss[.sss]` (leap seconds allowed) | JSON string | Pending |
+| `time` | `Time` | `String` | `hh:mm:ss[.sss]` (leap seconds allowed, no `24:00`, no timezone) | JSON string | Complete |
 | `unsignedInt`| `UnsignedInt`| `u32` (range $\ge 0$)| `[0]\|([1-9][0-9]*)`, $0..2147483647$ | JSON number | Pending |
 | `uri` | `Uri` | `String` | RFC 3986 URI: `\S*`, empty allowed | JSON string | Pending |
 | `url` | `Url` | `String` | RFC 1738/3986 URL: `\S*`, empty allowed | JSON string | Pending |
@@ -141,7 +141,8 @@ fhir-core/
     │   ├── integer/           {mod.rs, test.rs}   Complete
     │   ├── integer64/         {mod.rs, test.rs}   Complete
     │   ├── string/            {mod.rs, test.rs}   Complete
-    │   └── (10 remaining: canonical, markdown, oid,
-    │        positiveInt, time, unsignedInt, uri, url, uuid)
+    │   ├── time/              {mod.rs, test.rs}   Complete
+    │   └── (9 remaining: canonical, markdown, oid,
+    │        positiveInt, unsignedInt, uri, url, uuid)
     └── r5/                    <-- placeholder for future resource models
 ```

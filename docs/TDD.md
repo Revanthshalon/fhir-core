@@ -57,7 +57,7 @@ type first needs them (see LLD.md §4), not ahead of time.
 | `markdown` | Pending | `"# Header\n\n**bold**"`, `"   "`, `""` (verify against spec — may share `string`'s emptiness rule or diverge) | Strings exceeding 1,048,576 characters |
 | `oid` | Pending | `"urn:oid:1.2.3.4"`, `"urn:oid:2.999.1"` | `"1.2.3.4"` (missing prefix), `"urn:oid:3.1"`, `"urn:oid:1.01"` |
 | `positiveInt`| Pending | `1`, `42`, `2147483647`, `"1"`, `"+1"` | `0`, `-1`, `"+0"`, `"01"`, `2147483648`, `""` |
-| `time` | Pending | `"00:00:00"`, `"23:59:59"`, `"14:30:00.123"`, `"23:59:60"` | `"24:00:00"`, `"12:60:00"`, `"12:00"`, `"12"`, `"-01:00:00"` |
+| `time` | Complete | `"00:00:00"`, `"23:59:59"`, `"14:30:00.123"`, `"23:59:60"` | `"24:00:00"`, `"12:60:00"`, `"12:00"`, `"12"`, `"-01:00:00"` |
 | `unsignedInt`| Pending | `0`, `1`, `2147483647`, `"0"`, `"1"` | `-1`, `"-0"`, `"+0"`, `"01"`, `2147483648`, `""` |
 | `uri` | Pending | `"http://example.org"`, `"urn:uuid:123"`, `"/relative/path"`, `""` | Internal whitespace |
 | `url` | Pending | `"http://example.org/index.html"`, `"https://fhir.org"`, `""` | Internal whitespace, non-URL characters |
@@ -69,15 +69,14 @@ type first needs them (see LLD.md §4), not ahead of time.
 
 Straight list, no dates — one primitive at a time, `make check` green before moving on:
 
-1. `time`
-2. `positiveInt`
-3. `unsignedInt`
-4. `oid`
-5. `uuid`
-6. `uri`
-7. `url`
-8. `canonical`
-9. `markdown`
+1. `positiveInt`
+2. `unsignedInt`
+3. `oid`
+4. `uuid`
+5. `uri`
+6. `url`
+7. `canonical`
+8. `markdown`
 
 After all 20 primitives are done: pick the first real complex-type consumer (likely
 `Extension`) and design only the trait/wrapper surface it needs — see LLD.md §4. Not

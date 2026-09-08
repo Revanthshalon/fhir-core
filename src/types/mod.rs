@@ -22,6 +22,8 @@ mod integer;
 mod integer64;
 #[cfg(feature = "r5")]
 mod string;
+#[cfg(feature = "r5")]
+mod time;
 
 // Re-exports
 #[cfg(feature = "r5")]
@@ -46,3 +48,5 @@ pub use integer::Integer;
 pub use integer64::Integer64;
 #[cfg(feature = "r5")]
 pub use string::FhirString;
+#[cfg(feature = "r5")]
+pub use time::Time;
