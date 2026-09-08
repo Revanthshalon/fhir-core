@@ -5,3 +5,5 @@
 
 pub mod complex;
 pub mod primitive;
+
+pub use primitive::Primitive;
