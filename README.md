@@ -23,15 +23,30 @@ Core primitive types, data models, and validation logic for Fast Healthcare Inte
 
 ## Supported Primitives
 
+All 20 FHIR R5 primitives are implemented.
+
 | Primitive | Rust Type | Description |
 | :--- | :--- | :--- |
 | `base64Binary` | [`Base64Binary`](src/types/base64/mod.rs) | RFC 4648 Base64-encoded byte streams with strict padding and alphabet validation. |
 | `boolean` | [`Boolean`](src/types/boolean/mod.rs) | Binary `true` or `false` value. |
+| `canonical` | [`Canonical`](src/types/canonical/mod.rs) | Reference to a resource by its canonical URL, optionally with a `\|version` suffix. |
+| `code` | [`Code`](src/types/code/mod.rs) | Non-empty string with no leading/trailing whitespace and only single interior spaces. |
+| `date` | [`Date`](src/types/date/mod.rs) | Full or partial calendar date (`YYYY`, `YYYY-MM`, or `YYYY-MM-DD`), calendar-valid. |
+| `dateTime` | [`DateTime`](src/types/date_time/mod.rs) | Full or partial date, or a full date-time with a mandatory timezone offset. |
 | `decimal` | [`Decimal`](src/types/decimal/mod.rs) | Arbitrary-precision decimal preserving trailing-zero precision (e.g. `0.010`). |
 | `id` | [`Id`](src/types/id/mod.rs) | Resource-local identifier, `[A-Za-z0-9\-\.]{1,64}`. |
+| `instant` | [`Instant`](src/types/instant/mod.rs) | Full date-time with a mandatory timezone offset; no partial precision allowed. |
 | `integer` | [`Integer`](src/types/integer/mod.rs) | 32-bit signed integer, `-2^31 .. 2^31-1`. |
 | `integer64` | [`Integer64`](src/types/integer64/mod.rs) | 64-bit signed integer, serialized as a JSON string per spec. |
+| `markdown` | [`Markdown`](src/types/markdown/mod.rs) | Same rules as `string`, for content that may contain GFM CommonMark syntax. |
+| `oid` | [`Oid`](src/types/oid/mod.rs) | An OID as a URI: `urn:oid:` plus a root arc (`0`-`2`) and one or more further arcs. |
+| `positiveInt` | [`PositiveInt`](src/types/positive_int/mod.rs) | Positive integer, `1 .. 2,147,483,647`. |
 | `string` | [`FhirString`](src/types/string/mod.rs) | Unicode strings up to 1,048,576 characters, with control character and whitespace validation. |
+| `time` | [`Time`](src/types/time/mod.rs) | Time-of-day with no date and no timezone; `24:00` is forbidden. |
+| `unsignedInt` | [`UnsignedInt`](src/types/unsigned_int/mod.rs) | Non-negative integer, `0 .. 2,147,483,647`. |
+| `uri` | [`Uri`](src/types/uri/mod.rs) | RFC 3986 URI reference; only whitespace is rejected, empty string is valid. |
+| `url` | [`Url`](src/types/url/mod.rs) | RFC 1738 URL; same validation as `uri`, kept as a distinct type per spec. |
+| `uuid` | [`Uuid`](src/types/uuid/mod.rs) | A UUID as a URI: `urn:uuid:` plus the canonical lowercase-hex `8-4-4-4-12` form. |
 
 ---
 

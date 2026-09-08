@@ -64,7 +64,7 @@ Every primitive in `src/types/<type_name>/` follows the same shape (see
 | `date` | `Date` | `String` | `YYYY`, `YYYY-MM`, or `YYYY-MM-DD`, calendar-valid | JSON string | Complete |
 | `dateTime` | `DateTime` | `String` | `YYYY`, `YYYY-MM`, `YYYY-MM-DD`, or ISO-8601 with mandatory TZ when time is present | JSON string | Complete |
 | `instant` | `Instant` | `String` | `YYYY-MM-DDThh:mm:ss[.sss](Z\|[+-]hh:mm)` (full precision + TZ mandatory, no partial dates) | JSON string | Complete |
-| `markdown` | `Markdown` | `String` | Reuses `string`'s pattern (`[ \r\n\t\S]+`), max 1,048,576 chars | JSON string | Pending |
+| `markdown` | `Markdown` | `String` | Reuses `string`'s pattern (`[ \r\n\t\S]+`), max 1,048,576 chars | JSON string | Complete |
 | `oid` | `Oid` | `String` | `urn:oid:[0-2](\.(0\|[1-9][0-9]*))+` | JSON string | Complete |
 | `positiveInt`| `PositiveInt`| `u32` (range $\ge 1$)| `[1-9][0-9]*`, $1..2147483647$ | JSON number | Complete |
 | `time` | `Time` | `String` | `hh:mm:ss[.sss]` (leap seconds allowed, no `24:00`, no timezone) | JSON string | Complete |
@@ -141,6 +141,7 @@ fhir-core/
     │   ├── instant/           {mod.rs, test.rs}   Complete
     │   ├── integer/           {mod.rs, test.rs}   Complete
     │   ├── integer64/         {mod.rs, test.rs}   Complete
+    │   ├── markdown/          {mod.rs, test.rs}   Complete
     │   ├── oid/               {mod.rs, test.rs}   Complete
     │   ├── positive_int/      {mod.rs, test.rs}   Complete (FHIR `positiveInt`)
     │   ├── string/            {mod.rs, test.rs}   Complete
@@ -149,6 +150,6 @@ fhir-core/
     │   ├── uri/               {mod.rs, test.rs}   Complete
     │   ├── url/               {mod.rs, test.rs}   Complete
     │   ├── uuid/              {mod.rs, test.rs}   Complete
-    │   └── (1 remaining: markdown)
+    │   └── (all 20 FHIR R5 primitives complete)
     └── r5/                    <-- placeholder for future resource models
 ```

@@ -23,6 +23,8 @@ mod integer;
 #[cfg(feature = "r5")]
 mod integer64;
 #[cfg(feature = "r5")]
+mod markdown;
+#[cfg(feature = "r5")]
 mod oid;
 #[cfg(feature = "r5")]
 mod positive_int;
@@ -62,6 +64,8 @@ pub use instant::Instant;
 pub use integer::Integer;
 #[cfg(feature = "r5")]
 pub use integer64::Integer64;
+#[cfg(feature = "r5")]
+pub use markdown::Markdown;
 #[cfg(feature = "r5")]
 pub use oid::Oid;
 #[cfg(feature = "r5")]

@@ -54,7 +54,7 @@ type first needs them (see LLD.md §4), not ahead of time.
 | `date` | Complete | `"2020"`, `"2020-05"`, `"2020-05-15"` | `"2020-5"`, `"2020-13-01"`, `"2020-02-30"`, `"0000"`, `"2020-00"` |
 | `dateTime` | Complete | `"2020"`, `"2020-05-15T10:30:00Z"`, `"2020-05-15T10:30:00+02:00"` | Missing timezone on time (`"2020-05-15T10:30:00"`), bad leap year |
 | `instant` | Complete | `"2020-05-15T10:30:00Z"`, `"2020-05-15T10:30:00.123456789+05:30"` | Partial date (`"2020-05-15"`), missing seconds, offset `> 14:00` |
-| `markdown` | Pending | `"# Header\n\n**bold**"`, `"   "`, `""` (verify against spec — may share `string`'s emptiness rule or diverge) | Strings exceeding 1,048,576 characters |
+| `markdown` | Complete | `"# Header\n\n**bold**"` | `""`, `"   "` (same non-whitespace-content rule as `string`), strings exceeding 1,048,576 characters |
 | `oid` | Complete | `"urn:oid:1.2.3.4"`, `"urn:oid:2.999.1"` | `"1.2.3.4"` (missing prefix), `"urn:oid:3.1"`, `"urn:oid:1.01"` |
 | `positiveInt`| Complete | `1`, `42`, `2147483647`, `"1"` | `0`, `-1`, `"+1"`, `"01"`, `2147483648`, `""` |
 | `time` | Complete | `"00:00:00"`, `"23:59:59"`, `"14:30:00.123"`, `"23:59:60"` | `"24:00:00"`, `"12:60:00"`, `"12:00"`, `"12"`, `"-01:00:00"` |
@@ -67,10 +67,8 @@ type first needs them (see LLD.md §4), not ahead of time.
 
 ## 4. Remaining Work Order
 
-Straight list, no dates — one primitive at a time, `make check` green before moving on:
+All 20 FHIR R5 primitives are complete.
 
-1. `markdown`
-
-After all 20 primitives are done: pick the first real complex-type consumer (likely
-`Extension`) and design only the trait/wrapper surface it needs — see LLD.md §4. Not
-scheduled further than that until it's the current task.
+Next: pick the first real complex-type consumer (likely `Extension`) and design only
+the trait/wrapper surface it needs — see LLD.md §4. Not scheduled further than that
+until it's the current task.
