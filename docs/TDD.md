@@ -49,7 +49,7 @@ type first needs them (see LLD.md §4), not ahead of time.
 | `integer` | Complete | `0`, `42`, `-100`, `"+42"`, `"0"`, `i32::MIN`, `i32::MAX` | `"-0"`, `"+0"`, `"01"`, `i32::MAX + 1`, `42.5`, letters |
 | `integer64` | Complete | `0`, `42`, `i64::MIN`, `i64::MAX`, serialized as `"42"` | `"-0"`, `"+0"`, `"01"`, `i64::MAX + 1`, raw JSON numbers |
 | `string` | Complete | `"Hello"`, unicode text, multiline text with `\n` | `""`, whitespace-only (`"   "`), ASCII control chars (`\0`) |
-| `canonical` | Pending | `"http://hl7.org/fhir/StructureDefinition/Patient"`, `"uri\|1.0#frag"`, `""` | Internal whitespace |
+| `canonical` | Complete | `"http://hl7.org/fhir/StructureDefinition/Patient"`, `"uri\|1.0#frag"`, `""` | Internal whitespace |
 | `code` | Complete | `"active"`, `"oral-route"`, `"code with single spaces"` | `""`, `" leading"`, `"trailing "`, `"double  spaces"`, `"\t"` |
 | `date` | Complete | `"2020"`, `"2020-05"`, `"2020-05-15"` | `"2020-5"`, `"2020-13-01"`, `"2020-02-30"`, `"0000"`, `"2020-00"` |
 | `dateTime` | Complete | `"2020"`, `"2020-05-15T10:30:00Z"`, `"2020-05-15T10:30:00+02:00"` | Missing timezone on time (`"2020-05-15T10:30:00"`), bad leap year |
@@ -69,8 +69,7 @@ type first needs them (see LLD.md §4), not ahead of time.
 
 Straight list, no dates — one primitive at a time, `make check` green before moving on:
 
-1. `canonical`
-2. `markdown`
+1. `markdown`
 
 After all 20 primitives are done: pick the first real complex-type consumer (likely
 `Extension`) and design only the trait/wrapper surface it needs — see LLD.md §4. Not

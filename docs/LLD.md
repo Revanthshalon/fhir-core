@@ -59,7 +59,7 @@ Every primitive in `src/types/<type_name>/` follows the same shape (see
 | `integer` | `Integer` | `i32` | `[0]\|[+-]?[1-9][0-9]*`, no signed zero, $-2^{31}..2^{31}-1$ | JSON number | Complete |
 | `integer64` | `Integer64` | `i64` | `[0]\|[+-]?[1-9][0-9]*`, no signed zero, $-2^{63}..2^{63}-1$ | **JSON string** (per spec) | Complete |
 | `string` | `FhirString` | `String` | `[ \r\n\t\S]+`, max 1MB. Control chars rejected as a hard MUST (deliberate strengthening of the spec's SHOULD-NOT) | JSON string | Complete |
-| `canonical` | `Canonical` | `String` | RFC 3986 URI + optional `\|version` / `#frag` (`\S*`, empty allowed) | JSON string | Pending |
+| `canonical` | `Canonical` | `String` | RFC 3986 URI + optional `\|version` / `#frag` (`\S*`, empty allowed) | JSON string | Complete |
 | `code` | `Code` | `String` | `[^\s]+( [^\s]+)*` (no lead/trail ws, only literal single spaces between tokens) | JSON string | Complete |
 | `date` | `Date` | `String` | `YYYY`, `YYYY-MM`, or `YYYY-MM-DD`, calendar-valid | JSON string | Complete |
 | `dateTime` | `DateTime` | `String` | `YYYY`, `YYYY-MM`, `YYYY-MM-DD`, or ISO-8601 with mandatory TZ when time is present | JSON string | Complete |
@@ -132,6 +132,7 @@ fhir-core/
     │   ├── mod.rs
     │   ├── base64/           {mod.rs, test.rs}   Complete
     │   ├── boolean/          {mod.rs, test.rs}   Complete
+    │   ├── canonical/        {mod.rs, test.rs}   Complete
     │   ├── code/             {mod.rs, test.rs}   Complete
     │   ├── date/             {mod.rs, test.rs}   Complete
     │   ├── date_time/        {mod.rs, test.rs}   Complete (FHIR `dateTime`)
@@ -148,6 +149,6 @@ fhir-core/
     │   ├── uri/               {mod.rs, test.rs}   Complete
     │   ├── url/               {mod.rs, test.rs}   Complete
     │   ├── uuid/              {mod.rs, test.rs}   Complete
-    │   └── (2 remaining: canonical, markdown)
+    │   └── (1 remaining: markdown)
     └── r5/                    <-- placeholder for future resource models
 ```

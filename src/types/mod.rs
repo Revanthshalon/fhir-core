@@ -5,6 +5,8 @@ mod base64;
 #[cfg(feature = "r5")]
 mod boolean;
 #[cfg(feature = "r5")]
+mod canonical;
+#[cfg(feature = "r5")]
 mod code;
 #[cfg(feature = "r5")]
 mod date;
@@ -42,6 +44,8 @@ mod uuid;
 pub use base64::Base64Binary;
 #[cfg(feature = "r5")]
 pub use boolean::Boolean;
+#[cfg(feature = "r5")]
+pub use canonical::Canonical;
 #[cfg(feature = "r5")]
 pub use code::Code;
 #[cfg(feature = "r5")]
