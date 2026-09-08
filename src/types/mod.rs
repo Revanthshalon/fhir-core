@@ -15,6 +15,8 @@ mod decimal;
 #[cfg(feature = "r5")]
 mod id;
 #[cfg(feature = "r5")]
+mod instant;
+#[cfg(feature = "r5")]
 mod integer;
 #[cfg(feature = "r5")]
 mod integer64;
@@ -36,6 +38,8 @@ pub use date_time::DateTime;
 pub use decimal::Decimal;
 #[cfg(feature = "r5")]
 pub use id::Id;
+#[cfg(feature = "r5")]
+pub use instant::Instant;
 #[cfg(feature = "r5")]
 pub use integer::Integer;
 #[cfg(feature = "r5")]

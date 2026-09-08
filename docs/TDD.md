@@ -53,7 +53,7 @@ type first needs them (see LLD.md §4), not ahead of time.
 | `code` | Complete | `"active"`, `"oral-route"`, `"code with single spaces"` | `""`, `" leading"`, `"trailing "`, `"double  spaces"`, `"\t"` |
 | `date` | Complete | `"2020"`, `"2020-05"`, `"2020-05-15"` | `"2020-5"`, `"2020-13-01"`, `"2020-02-30"`, `"0000"`, `"2020-00"` |
 | `dateTime` | Complete | `"2020"`, `"2020-05-15T10:30:00Z"`, `"2020-05-15T10:30:00+02:00"` | Missing timezone on time (`"2020-05-15T10:30:00"`), bad leap year |
-| `instant` | Pending | `"2020-05-15T10:30:00Z"`, `"2020-05-15T10:30:00.123456789+05:30"` | Partial date (`"2020-05-15"`), missing seconds, offset `> 14:00` |
+| `instant` | Complete | `"2020-05-15T10:30:00Z"`, `"2020-05-15T10:30:00.123456789+05:30"` | Partial date (`"2020-05-15"`), missing seconds, offset `> 14:00` |
 | `markdown` | Pending | `"# Header\n\n**bold**"`, `"   "`, `""` (verify against spec — may share `string`'s emptiness rule or diverge) | Strings exceeding 1,048,576 characters |
 | `oid` | Pending | `"urn:oid:1.2.3.4"`, `"urn:oid:2.999.1"` | `"1.2.3.4"` (missing prefix), `"urn:oid:3.1"`, `"urn:oid:1.01"` |
 | `positiveInt`| Pending | `1`, `42`, `2147483647`, `"1"`, `"+1"` | `0`, `-1`, `"+0"`, `"01"`, `2147483648`, `""` |
@@ -69,16 +69,15 @@ type first needs them (see LLD.md §4), not ahead of time.
 
 Straight list, no dates — one primitive at a time, `make check` green before moving on:
 
-1. `instant`
-2. `time`
-3. `positiveInt`
-4. `unsignedInt`
-5. `oid`
-6. `uuid`
-7. `uri`
-8. `url`
-9. `canonical`
-10. `markdown`
+1. `time`
+2. `positiveInt`
+3. `unsignedInt`
+4. `oid`
+5. `uuid`
+6. `uri`
+7. `url`
+8. `canonical`
+9. `markdown`
 
 After all 20 primitives are done: pick the first real complex-type consumer (likely
 `Extension`) and design only the trait/wrapper surface it needs — see LLD.md §4. Not

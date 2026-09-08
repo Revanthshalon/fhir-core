@@ -63,7 +63,7 @@ Every primitive in `src/types/<type_name>/` follows the same shape (see
 | `code` | `Code` | `String` | `[^\s]+( [^\s]+)*` (no lead/trail ws, only literal single spaces between tokens) | JSON string | Complete |
 | `date` | `Date` | `String` | `YYYY`, `YYYY-MM`, or `YYYY-MM-DD`, calendar-valid | JSON string | Complete |
 | `dateTime` | `DateTime` | `String` | `YYYY`, `YYYY-MM`, `YYYY-MM-DD`, or ISO-8601 with mandatory TZ when time is present | JSON string | Complete |
-| `instant` | `Instant` | `String` | `YYYY-MM-DDThh:mm:ss[.sss](Z\|[+-]hh:mm)` (sec + TZ required) | JSON string | Pending |
+| `instant` | `Instant` | `String` | `YYYY-MM-DDThh:mm:ss[.sss](Z\|[+-]hh:mm)` (full precision + TZ mandatory, no partial dates) | JSON string | Complete |
 | `markdown` | `Markdown` | `String` | Reuses `string`'s pattern (`[ \r\n\t\S]+`), max 1,048,576 chars | JSON string | Pending |
 | `oid` | `Oid` | `String` | `urn:oid:[0-2](\.(0\|[1-9][0-9]*))+` | JSON string | Pending |
 | `positiveInt`| `PositiveInt`| `u32` (range $\ge 1$)| `[1-9][0-9]*`, $1..2147483647$ | JSON number | Pending |
@@ -137,10 +137,11 @@ fhir-core/
     │   ├── date_time/        {mod.rs, test.rs}   Complete (FHIR `dateTime`)
     │   ├── decimal/          {mod.rs, test.rs}   Complete
     │   ├── id/                {mod.rs, test.rs}   Complete
+    │   ├── instant/           {mod.rs, test.rs}   Complete
     │   ├── integer/           {mod.rs, test.rs}   Complete
     │   ├── integer64/         {mod.rs, test.rs}   Complete
     │   ├── string/            {mod.rs, test.rs}   Complete
-    │   └── (11 remaining: canonical, instant, markdown, oid,
+    │   └── (10 remaining: canonical, markdown, oid,
     │        positiveInt, time, unsignedInt, uri, url, uuid)
     └── r5/                    <-- placeholder for future resource models
 ```
