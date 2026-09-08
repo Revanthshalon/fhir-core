@@ -32,9 +32,10 @@
 3. **Serde round-trip** — `to_string`/`from_str` and correct JSON token shape (e.g.
    `integer64` as a JSON string, `decimal` as a JSON number).
 
-Layers for invariant checks (`ele-1`, `ext-1`, `per-1`, ...) and the `_propertyName`
-companion protocol don't apply yet — they're specified alongside whichever complex
-type first needs them (see LLD.md §4), not ahead of time.
+Layer for invariant checks now covers `ele-1` (`Primitive<T>`) and `ext-1` (`Extension`),
+including the `_propertyName` companion protocol (§4.1, §4.2). Remaining invariants
+(`per-1`, ...) are specified alongside whichever complex type first needs them (see
+LLD.md §4), not ahead of time.
 
 ---
 
@@ -69,14 +70,27 @@ type first needs them (see LLD.md §4), not ahead of time.
 
 All 20 FHIR R5 primitives are complete.
 
-### 4.1 `Extension` Test Coverage (`src/datatypes/complex/extension/test.rs`)
+### 4.1 `Primitive<T>` Test Coverage (`src/datatypes/primitive/test.rs`)
+
+- `ele-1`: value-only succeeds, extension-only succeeds, both succeeds, neither fails,
+  **`id` alone fails** (the FHIRPath nuance — `id` doesn't count on its own).
+- `from_value` is infallible and produces a bare (no id/extension) instance.
+- `new_unchecked` bypasses `ele-1`.
+- Accessors, `Clone`/`PartialEq`.
+
+### 4.2 `Extension` Test Coverage (`src/datatypes/complex/extension/test.rs`)
 
 - `ext-1` XOR enforcement: value-only succeeds, children-only succeeds, neither fails,
   both fails (asserts the exact `ConstraintError::InvariantViolated` message).
 - Nested/recursive extensions (grandchild depth).
-- `id`/`url`/`extensions`/`value` accessors.
+- `id`/`url`/`extensions`/`value` accessors — `url()` now returns `&Primitive<Uri>`.
 - `new_unchecked` bypasses `ext-1` (mirrors every primitive's escape hatch).
-- One round-trip per `ExtensionValue` variant (all 20 primitives).
+- One round-trip per `ExtensionValue` variant (all 20 primitives), each now
+  `Primitive`-wrapped.
+- Serde: value-only, id+children, value-with-companion, companion-only-no-value
+  (data-absent-reason) for both `url` and `value[x]`, `_valueX` merged regardless of
+  JSON key order, missing `url` fails, `ext-1` violations fail on deserialize,
+  unknown fields ignored, `id`-alone-on-a-companion fails `ele-1` on deserialize.
 
 Next: pick the next real complex-type consumer and design only the trait/wrapper
 surface it needs — see LLD.md §4. Not scheduled further than that until it's the

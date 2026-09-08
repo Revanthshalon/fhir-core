@@ -40,19 +40,22 @@ clients, ETL, FHIRPath), but does not itself model resources yet.
 
 ## 3. Subsystem Architecture
 
-Two subsystems so far:
+Three subsystems so far:
 - **Primitives Engine** (`src/types/`) — 20 normative FHIR R5 primitive types, each a
   standalone struct with construction-time validation.
+- **Element Wrapper** (`src/datatypes/primitive/`) — `Primitive<T>`, the
+  `{value, id, extension}` shape every primitive-valued property structurally is, plus
+  the `_propertyName` companion serde split/merge helpers hand-rolled containers use.
 - **Complex Types** (`src/datatypes/complex/`) — currently just `Extension`, a plain
-  struct (no traits) enforcing the `ext-1` multi-field invariant.
+  struct (no traits) enforcing the `ext-1` multi-field invariant, with `url` and
+  `value[x]` wrapped in `Primitive<T>`.
 
 `src/errors/` provides the shared error types both return (`TypeError` for single-field
-grammar, `ConstraintError` for multi-field invariants like `ext-1`).
+grammar, `ConstraintError` for multi-field invariants like `ext-1`/`ele-1`).
 
-Everything past that (Element/Resource trait hierarchy, `Primitive<T>` wrapper,
-`_propertyName` companion serde handling, the remaining complex types, choice-type enum
-growth) is deferred — see LLD.md §4 for why and how it gets designed when actually
-needed.
+Everything past that (Element/Resource trait hierarchy, the remaining complex types,
+choice-type enum growth) is deferred — see LLD.md §4 for why and how it gets designed
+when actually needed.
 
 ---
 
@@ -83,8 +86,14 @@ HL7 FHIR R5 requires `integer64` to serialize as a JSON string
 - `Integer64::deserialize` accepts a JSON string or integer, validating
   $[-2^{63}, 2^{63}-1]$.
 
-The `_propertyName` companion-field protocol (for `id`/`extension` on primitive JSON
-fields) is deferred along with `Primitive<T>` — see LLD.md §4.
+### 5.2 The `_propertyName` Companion Protocol
+Any primitive-valued property may carry its own `id`/`extension` via a `_`-prefixed
+sibling key (`"gender": "male", "_gender": {"id": "g1"}`), present only as needed
+(bare key alone, `_`-key alone for the data-absent-reason case, or both). `Primitive<T>`
+has no `Serialize`/`Deserialize` of its own since it isn't one JSON value in general —
+`src/datatypes/primitive/mod.rs`'s `serialize_primitive_entry`/`merge_primitive_entry`
+do the split/merge, called by each hand-rolled container (`Extension`'s impl today).
+See LLD.md §4.2.
 
 ---
 

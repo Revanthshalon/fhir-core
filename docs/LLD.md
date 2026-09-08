@@ -81,16 +81,18 @@ spec page.
 
 ## 4. Deferred: Element Model & Remaining Complex Types
 
-`Extension` (`src/datatypes/complex/extension/`) is built — see §4.1. Still not designed,
-on purpose: `Base`/`Element`/`Resource` trait hierarchy, `Primitive<T>` wrapper,
-`_propertyName` companion JSON handling, and the remaining complex types (`Coding`,
-`CodeableConcept`, `Identifier`, `Period`, `Quantity`, `Reference`).
+`Extension` (`src/datatypes/complex/extension/`) and `Primitive<T>`
+(`src/datatypes/primitive/`) are built — see §4.1 and §4.2. Still not designed, on
+purpose: `Base`/`Element`/`Resource` trait hierarchy and the remaining complex types
+(`Coding`, `CodeableConcept`, `Identifier`, `Period`, `Quantity`, `Reference`).
 
 These get designed bottom-up when a real consumer needs them, pulling in only the
 trait(s)/wrapper that consumer actually requires — not a hierarchy up front. Building
 the full hierarchy speculatively last time produced code that didn't compile
 (`&[Resource]` with an unsized trait) and a `Primitive<T>` with public fields that let
-its own `ele-1` invariant be bypassed by direct construction.
+its own `ele-1` invariant be bypassed by direct construction — the private-fields +
+validating-constructor shape both `Extension` and the real `Primitive<T>` use now is a
+direct reaction to that.
 
 ### 4.1 `Extension`
 
@@ -102,6 +104,32 @@ private fields, a validating constructor (`Extension::new`, checks `ext-1`), and
 not the full 54 types the real spec allows (20 primitives + 35 complex types). A
 complex-type variant is added the moment that complex type is built, not before —
 `Extension` becomes the natural second consumer for each one as the crate grows.
+
+`Extension.url` and every `ExtensionValue` variant wrap
+[`Primitive<T>`](#42-primitivet), not the bare primitive type, since both are
+primitive-valued properties eligible for the JSON companion pattern (§4.2).
+`Extension.id` stays a plain `FhirString` — the spec special-cases `Element.id` as an
+ordinary property, never itself companion-wrapped.
+
+### 4.2 `Primitive<T>`
+
+`{ value: Option<T>, id: Option<FhirString>, extension: Vec<Extension> }` — what every
+FHIR primitive-valued property structurally is. Private fields; `Primitive::new`
+validates `ele-1`, `Primitive::from_value` is the infallible "just a bare value" sugar,
+`new_unchecked` is the explicit bypass.
+
+`ele-1`'s FHIRPath is `hasValue() or (children().count() > id.count())` — `id` counts as
+a child, so `id` alone (no value, no extension) does **not** satisfy `ele-1`. This is a
+real spec nuance, not the more obvious-looking "value or id or extension" — caught by
+fetching hl7.org/fhir/R5/types.html#Element rather than assuming, per this crate's
+spec-driven-not-memory-driven rule.
+
+**No `Serialize`/`Deserialize` on `Primitive<T>` itself** — it isn't representable as a
+single JSON value in general (it can be 0, 1, or 2 sibling keys: bare `propertyName`,
+`_propertyName` companion, or both, depending on state). The split/merge logic lives in
+two `pub(crate)` helpers next to the type (`serialize_primitive_entry`,
+`merge_primitive_entry`), used by every hand-rolled container `Serialize`/`Deserialize`
+impl — currently just `Extension`'s (21 call sites: `url` + 20 `value[x]` variants).
 
 ---
 
@@ -168,7 +196,7 @@ fhir-core/
     │   └── (all 20 FHIR R5 primitives complete)
     ├── datatypes/             <-- FHIR reusable data types
     │   ├── mod.rs
-    │   ├── primitive/         <-- stub, unused until Primitive<T> is designed (§4)
+    │   ├── primitive/         {mod.rs, test.rs}   Complete (Primitive<T>)
     │   └── complex/
     │       ├── mod.rs
     │       └── extension/     {mod.rs, test.rs}   Complete
