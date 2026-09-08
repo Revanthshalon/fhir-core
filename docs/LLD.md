@@ -60,9 +60,9 @@ Every primitive in `src/types/<type_name>/` follows the same shape (see
 | `integer64` | `Integer64` | `i64` | `[0]\|[+-]?[1-9][0-9]*`, no signed zero, $-2^{63}..2^{63}-1$ | **JSON string** (per spec) | Complete |
 | `string` | `FhirString` | `String` | `[ \r\n\t\S]+`, max 1MB. Control chars rejected as a hard MUST (deliberate strengthening of the spec's SHOULD-NOT) | JSON string | Complete |
 | `canonical` | `Canonical` | `String` | RFC 3986 URI + optional `\|version` / `#frag` (`\S*`, empty allowed) | JSON string | Pending |
-| `code` | `Code` | `String` | `[^\s]+(\s[^\s]+)*` (no lead/trail ws, single interior whitespace runs) | JSON string | Pending |
-| `date` | `Date` | `String` | `YYYY`, `YYYY-MM`, or `YYYY-MM-DD`, calendar-valid | JSON string | Pending |
-| `dateTime` | `DateTime` | `String` | `YYYY`, `YYYY-MM`, `YYYY-MM-DD`, or ISO-8601 with TZ | JSON string | Pending |
+| `code` | `Code` | `String` | `[^\s]+( [^\s]+)*` (no lead/trail ws, only literal single spaces between tokens) | JSON string | Complete |
+| `date` | `Date` | `String` | `YYYY`, `YYYY-MM`, or `YYYY-MM-DD`, calendar-valid | JSON string | Complete |
+| `dateTime` | `DateTime` | `String` | `YYYY`, `YYYY-MM`, `YYYY-MM-DD`, or ISO-8601 with mandatory TZ when time is present | JSON string | Complete |
 | `instant` | `Instant` | `String` | `YYYY-MM-DDThh:mm:ss[.sss](Z\|[+-]hh:mm)` (sec + TZ required) | JSON string | Pending |
 | `markdown` | `Markdown` | `String` | Reuses `string`'s pattern (`[ \r\n\t\S]+`), max 1,048,576 chars | JSON string | Pending |
 | `oid` | `Oid` | `String` | `urn:oid:[0-2](\.(0\|[1-9][0-9]*))+` | JSON string | Pending |
@@ -132,12 +132,15 @@ fhir-core/
     │   ├── mod.rs
     │   ├── base64/           {mod.rs, test.rs}   Complete
     │   ├── boolean/          {mod.rs, test.rs}   Complete
+    │   ├── code/             {mod.rs, test.rs}   Complete
+    │   ├── date/             {mod.rs, test.rs}   Complete
+    │   ├── date_time/        {mod.rs, test.rs}   Complete (FHIR `dateTime`)
     │   ├── decimal/          {mod.rs, test.rs}   Complete
     │   ├── id/                {mod.rs, test.rs}   Complete
     │   ├── integer/           {mod.rs, test.rs}   Complete
     │   ├── integer64/         {mod.rs, test.rs}   Complete
     │   ├── string/            {mod.rs, test.rs}   Complete
-    │   └── (13 remaining: canonical, code, date, dateTime, instant, markdown, oid,
+    │   └── (11 remaining: canonical, instant, markdown, oid,
     │        positiveInt, time, unsignedInt, uri, url, uuid)
     └── r5/                    <-- placeholder for future resource models
 ```

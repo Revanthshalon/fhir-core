@@ -5,6 +5,12 @@ mod base64;
 #[cfg(feature = "r5")]
 mod boolean;
 #[cfg(feature = "r5")]
+mod code;
+#[cfg(feature = "r5")]
+mod date;
+#[cfg(feature = "r5")]
+mod date_time;
+#[cfg(feature = "r5")]
 mod decimal;
 #[cfg(feature = "r5")]
 mod id;
@@ -20,6 +26,12 @@ mod string;
 pub use base64::Base64Binary;
 #[cfg(feature = "r5")]
 pub use boolean::Boolean;
+#[cfg(feature = "r5")]
+pub use code::Code;
+#[cfg(feature = "r5")]
+pub use date::Date;
+#[cfg(feature = "r5")]
+pub use date_time::DateTime;
 #[cfg(feature = "r5")]
 pub use decimal::Decimal;
 #[cfg(feature = "r5")]

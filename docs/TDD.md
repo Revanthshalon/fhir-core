@@ -50,9 +50,9 @@ type first needs them (see LLD.md §4), not ahead of time.
 | `integer64` | Complete | `0`, `42`, `i64::MIN`, `i64::MAX`, serialized as `"42"` | `"-0"`, `"+0"`, `"01"`, `i64::MAX + 1`, raw JSON numbers |
 | `string` | Complete | `"Hello"`, unicode text, multiline text with `\n` | `""`, whitespace-only (`"   "`), ASCII control chars (`\0`) |
 | `canonical` | Pending | `"http://hl7.org/fhir/StructureDefinition/Patient"`, `"uri\|1.0#frag"`, `""` | Internal whitespace |
-| `code` | Pending | `"active"`, `"oral-route"`, `"code with single spaces"` | `""`, `" leading"`, `"trailing "`, `"double  spaces"`, `"\t"` |
-| `date` | Pending | `"2020"`, `"2020-05"`, `"2020-05-15"` | `"2020-5"`, `"2020-13-01"`, `"2020-02-30"`, `"0000"`, `"2020-00"` |
-| `dateTime` | Pending | `"2020"`, `"2020-05-15T10:30:00Z"`, `"2020-05-15T10:30:00+02:00"` | Missing timezone on time (`"2020-05-15T10:30:00"`), bad leap year |
+| `code` | Complete | `"active"`, `"oral-route"`, `"code with single spaces"` | `""`, `" leading"`, `"trailing "`, `"double  spaces"`, `"\t"` |
+| `date` | Complete | `"2020"`, `"2020-05"`, `"2020-05-15"` | `"2020-5"`, `"2020-13-01"`, `"2020-02-30"`, `"0000"`, `"2020-00"` |
+| `dateTime` | Complete | `"2020"`, `"2020-05-15T10:30:00Z"`, `"2020-05-15T10:30:00+02:00"` | Missing timezone on time (`"2020-05-15T10:30:00"`), bad leap year |
 | `instant` | Pending | `"2020-05-15T10:30:00Z"`, `"2020-05-15T10:30:00.123456789+05:30"` | Partial date (`"2020-05-15"`), missing seconds, offset `> 14:00` |
 | `markdown` | Pending | `"# Header\n\n**bold**"`, `"   "`, `""` (verify against spec — may share `string`'s emptiness rule or diverge) | Strings exceeding 1,048,576 characters |
 | `oid` | Pending | `"urn:oid:1.2.3.4"`, `"urn:oid:2.999.1"` | `"1.2.3.4"` (missing prefix), `"urn:oid:3.1"`, `"urn:oid:1.01"` |
@@ -69,19 +69,16 @@ type first needs them (see LLD.md §4), not ahead of time.
 
 Straight list, no dates — one primitive at a time, `make check` green before moving on:
 
-1. `code`
-2. `date`
-3. `dateTime`
-4. `instant`
-5. `time`
-6. `positiveInt`
-7. `unsignedInt`
-8. `oid`
-9. `uuid`
-10. `uri`
-11. `url`
-12. `canonical`
-13. `markdown`
+1. `instant`
+2. `time`
+3. `positiveInt`
+4. `unsignedInt`
+5. `oid`
+6. `uuid`
+7. `uri`
+8. `url`
+9. `canonical`
+10. `markdown`
 
 After all 20 primitives are done: pick the first real complex-type consumer (likely
 `Extension`) and design only the trait/wrapper surface it needs — see LLD.md §4. Not
