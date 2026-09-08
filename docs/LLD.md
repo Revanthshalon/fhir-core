@@ -68,7 +68,7 @@ Every primitive in `src/types/<type_name>/` follows the same shape (see
 | `oid` | `Oid` | `String` | `urn:oid:[0-2](\.(0\|[1-9][0-9]*))+` | JSON string | Pending |
 | `positiveInt`| `PositiveInt`| `u32` (range $\ge 1$)| `[1-9][0-9]*`, $1..2147483647$ | JSON number | Complete |
 | `time` | `Time` | `String` | `hh:mm:ss[.sss]` (leap seconds allowed, no `24:00`, no timezone) | JSON string | Complete |
-| `unsignedInt`| `UnsignedInt`| `u32` (range $\ge 0$)| `[0]\|([1-9][0-9]*)`, $0..2147483647$ | JSON number | Pending |
+| `unsignedInt`| `UnsignedInt`| `u32` (range $\ge 0$)| `[0]\|([1-9][0-9]*)`, $0..2147483647$ | JSON number | Complete |
 | `uri` | `Uri` | `String` | RFC 3986 URI: `\S*`, empty allowed | JSON string | Pending |
 | `url` | `Url` | `String` | RFC 1738/3986 URL: `\S*`, empty allowed | JSON string | Pending |
 | `uuid` | `Uuid` | `String` | `urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}` | JSON string | Pending |
@@ -143,7 +143,7 @@ fhir-core/
     │   ├── positive_int/      {mod.rs, test.rs}   Complete (FHIR `positiveInt`)
     │   ├── string/            {mod.rs, test.rs}   Complete
     │   ├── time/              {mod.rs, test.rs}   Complete
-    │   └── (8 remaining: canonical, markdown, oid,
-    │        unsignedInt, uri, url, uuid)
+    │   ├── unsigned_int/      {mod.rs, test.rs}   Complete (FHIR `unsignedInt`)
+    │   └── (7 remaining: canonical, markdown, oid, uri, url, uuid)
     └── r5/                    <-- placeholder for future resource models
 ```

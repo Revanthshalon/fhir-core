@@ -26,6 +26,8 @@ mod positive_int;
 mod string;
 #[cfg(feature = "r5")]
 mod time;
+#[cfg(feature = "r5")]
+mod unsigned_int;
 
 // Re-exports
 #[cfg(feature = "r5")]
@@ -54,3 +56,5 @@ pub use positive_int::PositiveInt;
 pub use string::FhirString;
 #[cfg(feature = "r5")]
 pub use time::Time;
+#[cfg(feature = "r5")]
+pub use unsigned_int::UnsignedInt;
