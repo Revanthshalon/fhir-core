@@ -69,6 +69,15 @@ type first needs them (see LLD.md §4), not ahead of time.
 
 All 20 FHIR R5 primitives are complete.
 
-Next: pick the first real complex-type consumer (likely `Extension`) and design only
-the trait/wrapper surface it needs — see LLD.md §4. Not scheduled further than that
-until it's the current task.
+### 4.1 `Extension` Test Coverage (`src/datatypes/complex/extension/test.rs`)
+
+- `ext-1` XOR enforcement: value-only succeeds, children-only succeeds, neither fails,
+  both fails (asserts the exact `ConstraintError::InvariantViolated` message).
+- Nested/recursive extensions (grandchild depth).
+- `id`/`url`/`extensions`/`value` accessors.
+- `new_unchecked` bypasses `ext-1` (mirrors every primitive's escape hatch).
+- One round-trip per `ExtensionValue` variant (all 20 primitives).
+
+Next: pick the next real complex-type consumer and design only the trait/wrapper
+surface it needs — see LLD.md §4. Not scheduled further than that until it's the
+current task.

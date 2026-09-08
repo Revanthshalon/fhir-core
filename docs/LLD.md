@@ -79,19 +79,29 @@ spec page.
 
 ---
 
-## 4. Deferred: Element Model & Complex Types
+## 4. Deferred: Element Model & Remaining Complex Types
 
-Not designed yet, on purpose: `Base`/`Element`/`Resource` trait hierarchy, `Primitive<T>`
-wrapper, `_propertyName` companion JSON handling, and complex types (`Extension`,
-`Coding`, `CodeableConcept`, `Identifier`, `Period`, `Quantity`, `Reference`) and choice
-type enums (`ExtensionValue`).
+`Extension` (`src/datatypes/complex/extension/`) is built — see §4.1. Still not designed,
+on purpose: `Base`/`Element`/`Resource` trait hierarchy, `Primitive<T>` wrapper,
+`_propertyName` companion JSON handling, and the remaining complex types (`Coding`,
+`CodeableConcept`, `Identifier`, `Period`, `Quantity`, `Reference`).
 
-These get designed bottom-up when a real consumer needs them — e.g. `Extension` is the
-natural first complex type, and it should pull in only the trait(s)/wrapper it actually
-requires, not the full hierarchy up front. Building the full hierarchy speculatively
-last time produced code that didn't compile (`&[Resource]` with an unsized trait) and a
-`Primitive<T>` with public fields that let its own `ele-1` invariant be bypassed by
-direct construction.
+These get designed bottom-up when a real consumer needs them, pulling in only the
+trait(s)/wrapper that consumer actually requires — not a hierarchy up front. Building
+the full hierarchy speculatively last time produced code that didn't compile
+(`&[Resource]` with an unsized trait) and a `Primitive<T>` with public fields that let
+its own `ele-1` invariant be bypassed by direct construction.
+
+### 4.1 `Extension`
+
+No traits: nothing consumes `Extension` polymorphically yet, so it's a plain struct with
+private fields, a validating constructor (`Extension::new`, checks `ext-1`), and
+`new_unchecked` as the explicit bypass — the same shape every primitive already uses.
+
+`ExtensionValue` (`value[x]`) covers only the 20 primitives this crate has implemented,
+not the full 54 types the real spec allows (20 primitives + 35 complex types). A
+complex-type variant is added the moment that complex type is built, not before —
+`Extension` becomes the natural second consumer for each one as the crate grows.
 
 ---
 
@@ -101,13 +111,18 @@ Current, shipped:
 
 ```
 FhirCoreError
-  └─ Type(TypeError)
-       └─ TypeError::InvalidValue { r#type: String, value: String, error: String }
+  ├─ Type(TypeError)
+  │    └─ TypeError::InvalidValue { r#type: String, value: String, error: String }
+  └─ Constraint(ConstraintError)
+       └─ ConstraintError::InvariantViolated { key: &'static str, description: String }
 ```
 
-`ConstraintError` (multi-field invariants like `ele-1`, `ext-1`, `per-1`) and any
-serialization-specific error variant are scoped and added alongside whichever complex
-type first needs them — not before.
+`ConstraintError` was added alongside `Extension`, the first complex type needing a
+multi-field invariant (`ext-1`). Remaining invariants (`ele-1`, `per-1`, ...) get their
+own `InvariantViolated { key, .. }` call sites as the types that need them are built —
+no new error variant required, `key` already carries the invariant identity. Any
+serialization-specific error variant is still scoped to whichever future need requires
+it — not before.
 
 ---
 
@@ -126,7 +141,7 @@ fhir-core/
     ├── errors/
     │   ├── mod.rs           <-- FhirCoreError
     │   ├── type.rs           <-- TypeError
-    │   ├── constraints.rs    <-- stub, unused until a complex type needs it
+    │   ├── constraints.rs    <-- ConstraintError (ext-1; more invariants reuse it)
     │   └── test.rs
     ├── types/                <-- FHIR R5 primitives, one dir per type
     │   ├── mod.rs
@@ -151,5 +166,11 @@ fhir-core/
     │   ├── url/               {mod.rs, test.rs}   Complete
     │   ├── uuid/              {mod.rs, test.rs}   Complete
     │   └── (all 20 FHIR R5 primitives complete)
+    ├── datatypes/             <-- FHIR reusable data types
+    │   ├── mod.rs
+    │   ├── primitive/         <-- stub, unused until Primitive<T> is designed (§4)
+    │   └── complex/
+    │       ├── mod.rs
+    │       └── extension/     {mod.rs, test.rs}   Complete
     └── r5/                    <-- placeholder for future resource models
 ```

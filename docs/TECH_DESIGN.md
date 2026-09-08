@@ -33,20 +33,26 @@ clients, ETL, FHIRPath), but does not itself model resources yet.
 | **Dependencies** | 0 non-serde dependencies | Only optional `serde` dependency in production builds. |
 | **Memory Efficiency** | Minimal heap allocation | `&str` slices for string-backed primitives; native primitives (`i32`, `i64`, `bool`, `u32`) stored directly. |
 | **Validation Fidelity** | 100% HL7 R5 conformance | Regexes/ranges verified against the spec page per type, not recalled. |
-| **Errors** | Structured, typed | `TypeError::InvalidValue { type, value, error }` today — all-`String` fields; no byte-index/char diagnostics yet. Richer variants are added only if a real caller needs them. |
+| **Errors** | Structured, typed | `TypeError::InvalidValue { type, value, error }` for single-field grammar, `ConstraintError::InvariantViolated { key, description }` for multi-field invariants (e.g. `ext-1`) — all-`String`/`&'static str` fields, no byte-index/char diagnostics yet. Richer variants are added only if a real caller needs them. |
 | **Modern Rust Baseline** | Edition 2024, MSRV 1.87 | — |
 
 ---
 
 ## 3. Subsystem Architecture
 
-Currently one subsystem: the **Primitives Engine** (`src/types/`) — 20 normative FHIR
-R5 primitive types, each a standalone struct with construction-time validation.
-`src/errors/` provides the shared error type it returns.
+Two subsystems so far:
+- **Primitives Engine** (`src/types/`) — 20 normative FHIR R5 primitive types, each a
+  standalone struct with construction-time validation.
+- **Complex Types** (`src/datatypes/complex/`) — currently just `Extension`, a plain
+  struct (no traits) enforcing the `ext-1` multi-field invariant.
+
+`src/errors/` provides the shared error types both return (`TypeError` for single-field
+grammar, `ConstraintError` for multi-field invariants like `ext-1`).
 
 Everything past that (Element/Resource trait hierarchy, `Primitive<T>` wrapper,
-`_propertyName` companion serde handling, complex types, choice-type enums) is
-deferred — see LLD.md §4 for why and how it gets designed when actually needed.
+`_propertyName` companion serde handling, the remaining complex types, choice-type enum
+growth) is deferred — see LLD.md §4 for why and how it gets designed when actually
+needed.
 
 ---
 
