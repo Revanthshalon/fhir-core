@@ -6,7 +6,7 @@
 //!   limit of 64 characters.
 //! - Case sensitive; UUIDs used as an `id` must be sent using lowercase letters.
 //! - JSON encoding: a JSON string.
-//! - More restrictive than [`FhirString`](crate::primitives::FhirString): no Unicode support, no
+//! - More restrictive than [`FhirString`](crate::types::FhirString): no Unicode support, no
 //!   whitespace, and a much shorter maximum length. Typically used for resource-local identifiers
 //!   (e.g. the final path segment of `http://example.com/fhir/Patient/1234`), so it is validated
 //!   independently rather than reusing `FhirString`'s validation.

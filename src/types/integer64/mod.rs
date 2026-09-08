@@ -5,7 +5,7 @@
 //!
 //! # Overview
 //! The FHIR `integer64` primitive represents a signed 64-bit integer (corresponding to XML's
-//! `xs:long`). Unlike [`Integer`](crate::primitives::Integer), it is defined to allow for
+//! `xs:long`). Unlike [`Integer`](crate::types::Integer), it is defined to allow for
 //! record/time counters that can get very large.
 //!
 //! Invariants according to the FHIR specification:

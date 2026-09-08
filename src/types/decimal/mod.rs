@@ -3,7 +3,7 @@
 //! # FHIR R5 specification (hl7.org/fhir/R5/datatypes.html#decimal)
 //! - XML representation: union of `xs:decimal` and `xs:double`.
 //! - Regex: `-?(0|[1-9][0-9]{0,17})(\.[0-9]{1,17})?([eE][+-]?[0-9]{1,9})?`
-//!   - Unlike [`Integer`](crate::primitives::Integer)/[`Integer64`](crate::primitives::Integer64),
+//!   - Unlike [`Integer`](crate::types::Integer)/[`Integer64`](crate::types::Integer64),
 //!     **no leading `+` is permitted** — only an optional `-`.
 //!   - Unlike `Integer`, the optional `-` wraps the *entire* alternation, not just the non-zero
 //!     branch — so `"-0"` is syntactically valid for `decimal` (contrast with `Integer`, which
@@ -80,7 +80,7 @@
 //! invalid state, `Decimal::new_unchecked` accepts an arbitrary string. `as_f64` assumes the
 //! wrapped string satisfies [`Decimal::validate`]'s grammar (which is why it's guaranteed
 //! `f64`-parseable) and will panic if that invariant was violated via `new_unchecked`. As with
-//! [`crate::primitives::FhirString::new_unchecked`], the caller is responsible for the invariant.
+//! [`crate::types::FhirString::new_unchecked`], the caller is responsible for the invariant.
 //!
 //! # Usage
 //! To create a new [`Decimal`] instance:

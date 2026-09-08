@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 and validation logic for FHIR (Fast Healthcare Interoperability Resources), R5. Zero non-serde
 dependencies; `#![forbid(unsafe_code)]`.
 
+Read `LESSONS.md` before starting work if it exists — it logs concrete mistakes from past sessions.
+
 ## Commands
 
 ```bash
@@ -42,11 +44,11 @@ exactly what CI enforces on every PR into `develop`.
   wraps subsystem errors; currently only variant is `Type(TypeError)`. `type.rs` defines `TypeError`,
   the granular error used by every primitive's validation failure (`InvalidValue { type, value, error }`).
   `constraints.rs` is a placeholder for future FHIR invariant/constraint evaluation errors.
-- `src/primitives/` — each FHIR primitive type lives in its own submodule
-  (`src/primitives/<type_name>/mod.rs` + `test.rs`), gated behind `#[cfg(feature = "r5")]` and
-  re-exported from `src/primitives/mod.rs`. Existing primitives: `base64` (`Base64Binary`),
-  `boolean` (`Boolean`), `decimal` (`Decimal`), `integer` (`Integer`), `integer64` (`Integer64`),
-  `string` (`FhirString`).
+- `src/types/` — each FHIR primitive type lives in its own submodule
+  (`src/types/<type_name>/mod.rs` + `test.rs`), gated behind `#[cfg(feature = "r5")]` and
+  re-exported from `src/types/mod.rs`. Existing primitives: `base64` (`Base64Binary`),
+  `boolean` (`Boolean`), `decimal` (`Decimal`), `id` (`Id`), `integer` (`Integer`),
+  `integer64` (`Integer64`), `string` (`FhirString`).
 - `src/r5/` — currently an empty placeholder module for future FHIR R5 resource/data models built
   on top of the primitives.
 - Feature flags: `r5` (default) gates all R5 primitives/models; `serde` (default) gates
@@ -54,7 +56,7 @@ exactly what CI enforces on every PR into `develop`.
 
 ### Primitive type pattern
 
-Every primitive follows the same shape (see `src/primitives/decimal/mod.rs` for the most fully
+Every primitive follows the same shape (see `src/types/decimal/mod.rs` for the most fully
 worked example, including extensive module-doc rationale for its non-obvious design choices):
 
 - Wraps the native Rust type (`bool`, `String`, `i32`, ...) — or, when spec semantics can't be
@@ -76,8 +78,8 @@ worked example, including extensive module-doc rationale for its non-obvious des
   boundary — a type-specific error enum (implementing `Display`/`Error`) can exist internally and
   map into `TypeError`.
 
-When adding a new primitive: create `src/primitives/<type_name>/{mod.rs,test.rs}`, gate it behind
-`#[cfg(feature = "r5")]`, and re-export it from `src/primitives/mod.rs`.
+When adding a new primitive: create `src/types/<type_name>/{mod.rs,test.rs}`, gate it behind
+`#[cfg(feature = "r5")]`, and re-export it from `src/types/mod.rs`.
 
 ## Conventions specific to this repo
 

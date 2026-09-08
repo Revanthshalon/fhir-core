@@ -25,9 +25,13 @@ Core primitive types, data models, and validation logic for Fast Healthcare Inte
 
 | Primitive | Rust Type | Description |
 | :--- | :--- | :--- |
-| `base64Binary` | [`Base64Binary`](src/primitives/base64/mod.rs) | RFC 4648 Base64-encoded byte streams with strict padding and alphabet validation. |
-| `boolean` | [`Boolean`](src/primitives/boolean/mod.rs) | Binary `true` or `false` value. |
-| `string` | [`FhirString`](src/primitives/string/mod.rs) | Unicode strings up to 1,048,576 characters, with control character and whitespace validation. |
+| `base64Binary` | [`Base64Binary`](src/types/base64/mod.rs) | RFC 4648 Base64-encoded byte streams with strict padding and alphabet validation. |
+| `boolean` | [`Boolean`](src/types/boolean/mod.rs) | Binary `true` or `false` value. |
+| `decimal` | [`Decimal`](src/types/decimal/mod.rs) | Arbitrary-precision decimal preserving trailing-zero precision (e.g. `0.010`). |
+| `id` | [`Id`](src/types/id/mod.rs) | Resource-local identifier, `[A-Za-z0-9\-\.]{1,64}`. |
+| `integer` | [`Integer`](src/types/integer/mod.rs) | 32-bit signed integer, `-2^31 .. 2^31-1`. |
+| `integer64` | [`Integer64`](src/types/integer64/mod.rs) | 64-bit signed integer, serialized as a JSON string per spec. |
+| `string` | [`FhirString`](src/types/string/mod.rs) | Unicode strings up to 1,048,576 characters, with control character and whitespace validation. |
 
 ---
 
@@ -53,7 +57,7 @@ cargo add fhir-core
 ### Base64Binary
 
 ```rust
-use fhir_core::primitives::Base64Binary;
+use fhir_core::types::Base64Binary;
 
 // Valid Base64 data
 let b64 = Base64Binary::new("TWFu").unwrap();
@@ -67,7 +71,7 @@ assert!(Base64Binary::new("TW@u").is_err()); // Invalid character
 ### Boolean
 
 ```rust
-use fhir_core::primitives::Boolean;
+use fhir_core::types::Boolean;
 
 let b = Boolean::new(true);
 assert!(b.as_bool());
@@ -80,10 +84,52 @@ assert_eq!(from_str, Boolean::new(true));
 assert!(Boolean::try_from("yes").is_err());
 ```
 
+### Decimal
+
+```rust
+use fhir_core::types::Decimal;
+
+// Trailing zeros are significant in FHIR and are preserved verbatim
+let d = Decimal::try_from("0.010").unwrap();
+assert_eq!(d.as_str(), "0.010");
+assert_eq!(d.as_f64(), 0.01);
+
+// Invalid decimals fail validation
+assert!(Decimal::try_from("01.5").is_err()); // Leading zero
+assert!(Decimal::try_from("+1.5").is_err()); // Leading '+' not allowed
+```
+
+### Id
+
+```rust
+use fhir_core::types::Id;
+
+let id = Id::new("patient-1234").unwrap();
+assert_eq!(id.as_str(), "patient-1234");
+
+// Invalid ids fail validation
+assert!(Id::new("").is_err()); // Empty
+assert!(Id::new("has a space").is_err()); // Disallowed character
+```
+
+### Integer & Integer64
+
+```rust
+use fhir_core::types::{Integer, Integer64};
+
+let i = Integer::try_from("42").unwrap();
+assert_eq!(i32::from(i), 42);
+
+// integer64 is serialized as a JSON string per the FHIR R5 spec
+let i64_val = Integer64::try_from("9223372036854775807").unwrap();
+let json = serde_json::to_string(&i64_val).unwrap();
+assert_eq!(json, "\"9223372036854775807\"");
+```
+
 ### String
 
 ```rust
-use fhir_core::primitives::FhirString;
+use fhir_core::types::FhirString;
 
 // Valid string
 let s = FhirString::new("Patient record notes").unwrap();
@@ -98,7 +144,7 @@ assert!(FhirString::new("bad\0char").is_err());
 ### JSON Serialization & Deserialization
 
 ```rust
-use fhir_core::primitives::{Base64Binary, Boolean, FhirString};
+use fhir_core::types::{Base64Binary, Boolean, FhirString};
 use serde_json;
 
 // Serialization
