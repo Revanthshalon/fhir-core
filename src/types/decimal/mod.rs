@@ -84,7 +84,7 @@
 //!
 //! # Usage
 //! To create a new [`Decimal`] instance:
-//! - Use [`TryFrom<&str>`] or [`std::str::FromStr`] to parse and validate from a string slice.
+//! - Use [`Decimal::new`], or [`TryFrom<&str>`]/[`std::str::FromStr`], to parse and validate.
 //! - Use [`Decimal::new_unchecked`] when the input is already known to be valid.
 
 use std::fmt;
@@ -92,7 +92,7 @@ use std::fmt;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
-use crate::errors::r#type::TypeError;
+use crate::errors::{FhirCoreResult, r#type::TypeError};
 
 #[cfg(test)]
 mod test;
@@ -311,6 +311,25 @@ impl Decimal {
         }
 
         Ok(())
+    }
+
+    /// Creates a new `Decimal` from a string, validating the FHIR `decimal` grammar.
+    ///
+    /// # Errors
+    /// Returns an error if the input string does not conform to [`Decimal::validate`].
+    ///
+    /// # Examples
+    /// ```
+    /// use fhir_core::types::Decimal;
+    ///
+    /// let d = Decimal::new("4.5600").unwrap();
+    /// assert_eq!(d.as_str(), "4.5600");
+    ///
+    /// let invalid = Decimal::new("+42");
+    /// assert!(invalid.is_err());
+    /// ```
+    pub fn new(value: impl Into<String>) -> FhirCoreResult<Self> {
+        Ok(Self::try_from(value.into())?)
     }
 
     /// Creates a new `Decimal` instance without validating the input string.

@@ -21,7 +21,7 @@
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::errors::r#type::TypeError;
+use crate::errors::{FhirCoreResult, r#type::TypeError};
 
 #[cfg(test)]
 mod test;
@@ -97,7 +97,7 @@ impl UnsignedInt {
     /// Creates a new `UnsignedInt` instance wrapping the given `u32` value.
     ///
     /// # Errors
-    /// Returns [`TypeError::InvalidValue`] if `value` exceeds [`UnsignedInt::MAX`].
+    /// Returns an error if `value` exceeds [`UnsignedInt::MAX`].
     ///
     /// # Examples
     /// ```
@@ -106,8 +106,8 @@ impl UnsignedInt {
     /// let u = UnsignedInt::new(7).unwrap();
     /// assert_eq!(u.as_u32(), 7);
     /// ```
-    pub fn new(value: u32) -> Result<Self, TypeError> {
-        Self::try_from(value)
+    pub fn new(value: u32) -> FhirCoreResult<Self> {
+        Ok(Self::try_from(value)?)
     }
 
     /// Returns the underlying value as a primitive `u32`.
