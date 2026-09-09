@@ -438,7 +438,23 @@ fn test_serde_deserialize_nested_children() {
 fn test_serde_deserialize_missing_url_fails() {
     let json = r#"{"valueBoolean":true}"#;
     let result: Result<Extension, _> = serde_json::from_str(json);
-    assert!(result.is_err());
+    let err = result.unwrap_err().to_string();
+    assert!(
+        err.contains("missing field") && err.contains("url"),
+        "expected a missing-field error naming `url`, got: {err}"
+    );
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_deserialize_multiple_value_x_fails() {
+    let json = r#"{"url":"http://example.org/fhir/StructureDefinition/x","valueBoolean":true,"valueString":"bar"}"#;
+    let result: Result<Extension, _> = serde_json::from_str(json);
+    let err = result.unwrap_err().to_string();
+    assert!(
+        err.contains("more than one value[x]"),
+        "expected a multiple-value[x] error, got: {err}"
+    );
 }
 
 #[cfg(feature = "serde")]

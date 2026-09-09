@@ -311,7 +311,41 @@ impl<'de> Deserialize<'de> for Extension {
                     }
                 }
 
+                if !url.is_present() {
+                    return Err(DeError::missing_field("url"));
+                }
                 let url = merge_primitive_entry(url.value, url.companion)?;
+
+                let present_value_slots = [
+                    base64_binary.is_present(),
+                    boolean.is_present(),
+                    canonical.is_present(),
+                    code.is_present(),
+                    date.is_present(),
+                    date_time.is_present(),
+                    decimal.is_present(),
+                    id_value.is_present(),
+                    instant.is_present(),
+                    integer.is_present(),
+                    integer64.is_present(),
+                    markdown.is_present(),
+                    oid.is_present(),
+                    positive_int.is_present(),
+                    string.is_present(),
+                    time.is_present(),
+                    unsigned_int.is_present(),
+                    uri.is_present(),
+                    url_value.is_present(),
+                    uuid.is_present(),
+                ]
+                .into_iter()
+                .filter(|present| *present)
+                .count();
+                if present_value_slots > 1 {
+                    return Err(DeError::custom(
+                        "Extension cannot have more than one value[x] property",
+                    ));
+                }
 
                 let value = if base64_binary.is_present() {
                     Some(ExtensionValue::Base64Binary(merge_primitive_entry(
