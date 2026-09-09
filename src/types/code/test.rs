@@ -135,6 +135,7 @@ fn test_ordering_and_equality() {
     assert_ne!(a, b);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let code = Code::new("active").unwrap();
@@ -142,6 +143,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "\"active\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "\"active\"";
@@ -149,6 +151,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(code.as_str(), "active");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"active\"";
@@ -156,6 +159,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(code.as_str(), "active");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("active".to_string());
@@ -163,6 +167,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(code.as_str(), "active");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Code>("\"\"").is_err());
@@ -170,6 +175,7 @@ fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Code>("\"double  space\"").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Code>("123").is_err());
@@ -179,6 +185,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Code>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Code::new("round trip code").unwrap();

@@ -148,6 +148,7 @@ fn test_ordering_and_equality() {
     assert_ne!(a, b);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let uuid = Uuid::new(VALID).unwrap();
@@ -155,6 +156,7 @@ fn test_serde_serialization() {
     assert_eq!(json, format!("\"{VALID}\""));
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = format!("\"{VALID}\"");
@@ -162,6 +164,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(uuid.as_str(), VALID);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = format!("\"{VALID}\"");
@@ -169,6 +172,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(uuid.as_str(), VALID);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String(VALID.to_string());
@@ -176,6 +180,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(uuid.as_str(), VALID);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Uuid>("\"\"").is_err());
@@ -185,6 +190,7 @@ fn test_serde_deserialization_invalid_value() {
     );
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Uuid>("123").is_err());
@@ -194,6 +200,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Uuid>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Uuid::new(VALID).unwrap();

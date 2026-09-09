@@ -18,6 +18,7 @@
 //! - Use [`TryFrom<&str>`] or [`std::str::FromStr`] to parse from a string slice.
 //! - Use [`UnsignedInt::new_unchecked`] when the input is already known to be valid.
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::errors::r#type::TypeError;
@@ -38,10 +39,12 @@ mod test;
 ///
 /// assert!(UnsignedInt::new(3_000_000_000).is_err());
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
-#[serde(try_from = "u32")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "u32"))]
 pub struct UnsignedInt(u32);
 
+#[cfg(feature = "serde")]
 impl Serialize for UnsignedInt {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

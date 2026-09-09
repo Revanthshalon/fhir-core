@@ -253,6 +253,7 @@ fn test_extension_value_variants_roundtrip() {
     }
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialize_value_only() {
     let ext = Extension::new(
@@ -271,6 +272,7 @@ fn test_serde_serialize_value_only() {
     );
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialize_with_id_and_children() {
     let child = Extension::new(
@@ -296,6 +298,7 @@ fn test_serde_serialize_with_id_and_children() {
     );
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialize_value_with_companion() {
     let note = Extension::new(
@@ -323,6 +326,7 @@ fn test_serde_serialize_value_with_companion() {
     );
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialize_companion_only_no_value() {
     let note = Extension::new(
@@ -350,6 +354,7 @@ fn test_serde_serialize_companion_only_no_value() {
     );
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_value_only() {
     let json = r#"{"url":"http://example.org/fhir/StructureDefinition/flag","valueBoolean":true}"#;
@@ -366,6 +371,7 @@ fn test_serde_deserialize_value_only() {
     );
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_value_with_companion() {
     let json = r#"{"url":"http://example.org/fhir/StructureDefinition/flag","valueBoolean":true,"_valueBoolean":{"id":"b1"}}"#;
@@ -377,6 +383,7 @@ fn test_serde_deserialize_value_with_companion() {
     assert_eq!(p.id().unwrap().as_str(), "b1");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_companion_only_no_bare_value() {
     // id alone would violate ele-1 (id doesn't count, per the FHIRPath nuance), so the
@@ -390,6 +397,7 @@ fn test_serde_deserialize_companion_only_no_bare_value() {
     assert_eq!(p.extensions().len(), 1);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_id_alone_on_companion_fails_ele1() {
     // Spec nuance: id alone (no value, no extension) does not satisfy ele-1.
@@ -399,6 +407,7 @@ fn test_serde_deserialize_id_alone_on_companion_fails_ele1() {
     assert!(result.is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_url_companion() {
     let json = r#"{"url":"http://example.org/fhir/StructureDefinition/flag","_url":{"id":"u1"},"valueBoolean":true}"#;
@@ -410,6 +419,7 @@ fn test_serde_deserialize_url_companion() {
     assert_eq!(ext.url().id().unwrap().as_str(), "u1");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_nested_children() {
     let json = r#"{"url":"http://example.org/fhir/StructureDefinition/parent","extension":[{"url":"http://example.org/fhir/StructureDefinition/child","valueInteger":42}]}"#;
@@ -423,6 +433,7 @@ fn test_serde_deserialize_nested_children() {
     );
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_missing_url_fails() {
     let json = r#"{"valueBoolean":true}"#;
@@ -430,6 +441,7 @@ fn test_serde_deserialize_missing_url_fails() {
     assert!(result.is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_ext1_violation_fails() {
     // Neither extension nor value present.
@@ -443,6 +455,7 @@ fn test_serde_deserialize_ext1_violation_fails() {
     assert!(result.is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_unknown_field_ignored() {
     let json = r#"{"url":"http://example.org/fhir/StructureDefinition/flag","valueBoolean":true,"unknownField":"ignored"}"#;
@@ -455,6 +468,7 @@ fn test_serde_deserialize_unknown_field_ignored() {
     );
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip_all_variants() {
     for value in all_extension_values() {
@@ -471,6 +485,7 @@ fn test_serde_roundtrip_all_variants() {
     }
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip_with_companion() {
     let note = Extension::new(

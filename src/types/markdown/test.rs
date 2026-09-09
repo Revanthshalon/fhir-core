@@ -159,6 +159,7 @@ fn test_ordering_and_equality() {
     assert_ne!(a, b);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let md = Markdown::new("**bold**").unwrap();
@@ -166,6 +167,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "\"**bold**\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "\"**bold**\"";
@@ -173,6 +175,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(md.as_str(), "**bold**");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"**bold**\"";
@@ -180,6 +183,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(md.as_str(), "**bold**");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("**bold**".to_string());
@@ -187,6 +191,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(md.as_str(), "**bold**");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_escaped() {
     let json = r#""Hello""#;
@@ -194,6 +199,7 @@ fn test_serde_deserialization_escaped() {
     assert_eq!(md.as_str(), "Hello");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Markdown>("\"\"").is_err());
@@ -201,6 +207,7 @@ fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Markdown>(r#""hello\u0000world""#).is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Markdown>("123").is_err());
@@ -210,6 +217,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Markdown>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Markdown::new("# Title\n\nBody text with 🚀").unwrap();

@@ -352,6 +352,7 @@ fn test_hash_consistent_with_eq() {
 // serde: Serialize — exact integer path
 // ---------------------------------------------------------------------
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialize_whole_number_as_json_integer() {
     let d = Decimal::try_from("100").unwrap();
@@ -368,12 +369,14 @@ fn test_serde_serialize_whole_number_as_json_integer() {
 // serde: Serialize — lossy f64 path (documented)
 // ---------------------------------------------------------------------
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialize_fractional_as_json_number() {
     let d = Decimal::try_from("4.56").unwrap();
     assert_eq!(serde_json::to_string(&d).unwrap(), "4.56");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialize_fractional_drops_trailing_zeros() {
     // Documented lossy behavior: trailing zeros in the fractional part are not preserved
@@ -386,6 +389,7 @@ fn test_serde_serialize_fractional_drops_trailing_zeros() {
 // serde: Deserialize — exact paths
 // ---------------------------------------------------------------------
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_from_json_integer_exact() {
     let d: Decimal = serde_json::from_str("42").unwrap();
@@ -395,6 +399,7 @@ fn test_serde_deserialize_from_json_integer_exact() {
     assert_eq!(neg.as_str(), "-42");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_from_json_string_exact() {
     // The precision-preserving path: exact original text, trailing zeros included.
@@ -402,6 +407,7 @@ fn test_serde_deserialize_from_json_string_exact() {
     assert_eq!(d.as_str(), "4.5600");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_from_value_string_exact() {
     let val = serde_json::Value::String("0.010".to_string());
@@ -413,6 +419,7 @@ fn test_serde_deserialize_from_value_string_exact() {
 // serde: Deserialize — lossy f64 path (documented)
 // ---------------------------------------------------------------------
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_from_json_fractional_number_reconstructs_value() {
     let d: Decimal = serde_json::from_str("4.56").unwrap();
@@ -420,6 +427,7 @@ fn test_serde_deserialize_from_json_fractional_number_reconstructs_value() {
     assert_eq!(d.as_f64(), 4.56);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_extreme_magnitude_round_trips_without_error() {
     // A spec-valid Decimal ("1e300": 1 integer digit, 3 exponent digits) must not fail to
@@ -433,6 +441,7 @@ fn test_serde_deserialize_extreme_magnitude_round_trips_without_error() {
     assert!(Decimal::validate(round_tripped.as_str()).is_ok());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_extreme_negative_magnitude() {
     let original = Decimal::try_from("-1e300").unwrap();
@@ -441,6 +450,7 @@ fn test_serde_deserialize_extreme_negative_magnitude() {
     assert_eq!(round_tripped.as_f64(), original.as_f64());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_extreme_small_magnitude() {
     let original = Decimal::try_from("1e-300").unwrap();
@@ -453,6 +463,7 @@ fn test_serde_deserialize_extreme_small_magnitude() {
 // serde: round-trip equality — only where it's actually guaranteed
 // ---------------------------------------------------------------------
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip_whole_number_is_exact() {
     let original = Decimal::try_from("123456789012345678").unwrap();
@@ -461,6 +472,7 @@ fn test_serde_roundtrip_whole_number_is_exact() {
     assert_eq!(original, round_tripped);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip_via_json_string_is_exact() {
     let original = Decimal::try_from("0.010").unwrap();
@@ -469,6 +481,7 @@ fn test_serde_roundtrip_via_json_string_is_exact() {
     assert_eq!(original, round_tripped);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip_fractional_json_number_is_lossy_by_design() {
     let original = Decimal::try_from("0.010").unwrap();
@@ -483,6 +496,7 @@ fn test_serde_roundtrip_fractional_json_number_is_lossy_by_design() {
 // serde: negative paths
 // ---------------------------------------------------------------------
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_nan_and_infinite_rejected() {
     // Real JSON text can never encode NaN/Infinity, so serde_json would reject these as a
@@ -506,6 +520,7 @@ fn test_serde_deserialize_nan_and_infinite_rejected() {
     assert!(neg_inf_result.is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_invalid_string_value() {
     assert!(serde_json::from_str::<Decimal>("\"+42\"").is_err());
@@ -513,6 +528,7 @@ fn test_serde_deserialize_invalid_string_value() {
     assert!(serde_json::from_str::<Decimal>("\"abc\"").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_invalid_type() {
     assert!(serde_json::from_str::<Decimal>("true").is_err());
@@ -521,6 +537,7 @@ fn test_serde_deserialize_invalid_type() {
     assert!(serde_json::from_str::<Decimal>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialize_malformed_json() {
     assert!(serde_json::from_str::<Decimal>("").is_err());

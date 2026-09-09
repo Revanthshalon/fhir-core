@@ -16,6 +16,7 @@
 //! - Use [`TryFrom<&str>`] or [`std::str::FromStr`] to parse from a string slice (`"true"` or `"false"`).
 //! - Use standard conversion traits like [`From<bool>`] or [`Into<bool>`].
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::errors::r#type::TypeError;
@@ -40,10 +41,9 @@ mod test;
 /// let invalid = Boolean::try_from("yes");
 /// assert!(invalid.is_err());
 /// ```
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
-)]
-#[serde(transparent)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(transparent))]
 pub struct Boolean(bool);
 
 impl Boolean {

@@ -189,6 +189,7 @@ fn test_ordering_and_equality() {
     assert_ne!(a, b);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let time = Time::new("14:30:00").unwrap();
@@ -196,6 +197,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "\"14:30:00\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "\"14:30:00\"";
@@ -203,6 +205,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(time.as_str(), "14:30:00");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"14:30:00\"";
@@ -210,6 +213,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(time.as_str(), "14:30:00");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("14:30:00".to_string());
@@ -217,6 +221,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(time.as_str(), "14:30:00");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Time>("\"\"").is_err());
@@ -224,6 +229,7 @@ fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Time>("\"14:30:00Z\"").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Time>("123").is_err());
@@ -233,6 +239,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Time>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Time::new("14:30:00.5").unwrap();

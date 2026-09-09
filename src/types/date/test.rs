@@ -221,6 +221,7 @@ fn test_ordering_and_equality() {
     assert_ne!(a, b);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let date = Date::new("2020-05-15").unwrap();
@@ -228,6 +229,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "\"2020-05-15\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "\"2020-05-15\"";
@@ -235,6 +237,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(date.as_str(), "2020-05-15");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"2020-05-15\"";
@@ -242,6 +245,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(date.as_str(), "2020-05-15");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("2020-05-15".to_string());
@@ -249,6 +253,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(date.as_str(), "2020-05-15");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Date>("\"\"").is_err());
@@ -257,6 +262,7 @@ fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Date>("\"2020-02-30\"").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Date>("123").is_err());
@@ -266,6 +272,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Date>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Date::new("1973-06-01").unwrap();

@@ -91,6 +91,7 @@ fn test_new_unchecked() {
     assert_eq!(b64_unvalidated.as_str(), "not_base64!");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let b64 = Base64Binary::new("TWFu").unwrap();
@@ -98,6 +99,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "\"TWFu\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "\"TWFu\"";
@@ -105,6 +107,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(b64.as_str(), "TWFu");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"TWFu\"";
@@ -112,6 +115,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(b64.as_str(), "TWFu");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("TWFu".to_string());
@@ -119,6 +123,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(b64.as_str(), "TWFu");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_escaped() {
     let json = r#""\u0054\u0057\u0046\u0075""#;
@@ -126,6 +131,7 @@ fn test_serde_deserialization_escaped() {
     assert_eq!(b64.as_str(), "TWFu");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     let json = "\"invalid\"";
@@ -133,6 +139,7 @@ fn test_serde_deserialization_invalid_value() {
     assert!(res.is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     let json = "12345";
@@ -140,6 +147,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(res.is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Base64Binary::new("TQ==").unwrap();
@@ -148,6 +156,7 @@ fn test_serde_roundtrip() {
     assert_eq!(original, deserialized);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_empty_string() {
     let original = Base64Binary::new("").unwrap();

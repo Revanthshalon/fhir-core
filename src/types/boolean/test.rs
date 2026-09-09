@@ -78,6 +78,7 @@ fn test_default() {
     assert_eq!(Boolean::default(), Boolean::new(false));
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let b_true = Boolean::new(true);
@@ -87,6 +88,7 @@ fn test_serde_serialization() {
     assert_eq!(serde_json::to_string(&b_false).unwrap(), "false");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let b_true: Boolean = serde_json::from_str("true").unwrap();
@@ -96,6 +98,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(b_false, Boolean::new(false));
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let b_true: Boolean = serde_json::from_reader(&b"true"[..]).unwrap();
@@ -105,6 +108,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(b_false, Boolean::new(false));
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val_true = serde_json::Value::Bool(true);
@@ -116,6 +120,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(b_false, Boolean::new(false));
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     // Strings, numbers, null, objects, arrays should fail
@@ -127,6 +132,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Boolean>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Boolean::new(true);

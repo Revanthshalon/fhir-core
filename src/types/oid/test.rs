@@ -163,6 +163,7 @@ fn test_ordering_and_equality() {
     assert_ne!(a, b);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let oid = Oid::new("urn:oid:1.2.3").unwrap();
@@ -170,6 +171,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "\"urn:oid:1.2.3\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "\"urn:oid:1.2.3\"";
@@ -177,6 +179,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(oid.as_str(), "urn:oid:1.2.3");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"urn:oid:1.2.3\"";
@@ -184,6 +187,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(oid.as_str(), "urn:oid:1.2.3");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("urn:oid:1.2.3".to_string());
@@ -191,6 +195,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(oid.as_str(), "urn:oid:1.2.3");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Oid>("\"\"").is_err());
@@ -198,6 +203,7 @@ fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Oid>("\"urn:oid:1.01\"").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Oid>("123").is_err());
@@ -207,6 +213,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Oid>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Oid::new("urn:oid:2.16.840.1.113883.3.1").unwrap();

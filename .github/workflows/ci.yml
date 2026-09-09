@@ -39,6 +39,11 @@ jobs:
       - name: Run Clippy linter
         run: cargo clippy --all-features --all-targets -- -D warnings
 
+      - name: Check feature matrix (r4/r5 without serde)
+        run: |
+          cargo clippy --no-default-features --features r4 --all-targets -- -D warnings
+          cargo clippy --no-default-features --features r5 --all-targets -- -D warnings
+
       - name: Run tests
         run: cargo test --all-features --verbose
 

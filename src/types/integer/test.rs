@@ -57,6 +57,7 @@ fn test_validate_lone_sign() {
     assert_eq!(Integer::validate("-"), Err(IntegerError::InvalidFormat));
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_validate_signed_zero_rejected() {
     // Per the FHIR regex `[0]|[-+]?[1-9][0-9]*`, only a bare "0" matches — a signed zero
@@ -352,6 +353,7 @@ fn test_ordering() {
     assert_eq!(Integer::new(5), Integer::new(5));
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let i = Integer::new(42);
@@ -362,6 +364,7 @@ fn test_serde_serialization() {
     assert_eq!(serde_json::to_string(&neg).unwrap(), "-42");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let i: Integer = serde_json::from_str("42").unwrap();
@@ -374,6 +377,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(zero.as_i32(), 0);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_boundaries() {
     let max: Integer = serde_json::from_str("2147483647").unwrap();
@@ -383,6 +387,7 @@ fn test_serde_deserialization_boundaries() {
     assert_eq!(min.as_i32(), i32::MIN);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"7";
@@ -390,6 +395,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(i.as_i32(), 7);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::Number(serde_json::Number::from(15));
@@ -397,6 +403,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(i.as_i32(), 15);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     for value in [i32::MIN, -1, 0, 1, i32::MAX] {
@@ -407,6 +414,7 @@ fn test_serde_roundtrip() {
     }
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_out_of_range() {
     // Exceeds i32::MAX
@@ -417,6 +425,7 @@ fn test_serde_deserialization_out_of_range() {
     assert!(serde_json::from_str::<Integer>("99999999999999999999").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Integer>("\"42\"").is_err());
@@ -426,12 +435,14 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Integer>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_non_integer_number() {
     // FHIR integer is a JSON number without a decimal point; 1.5 cannot fit in i32.
     assert!(serde_json::from_str::<Integer>("1.5").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_malformed_json() {
     assert!(serde_json::from_str::<Integer>("").is_err());

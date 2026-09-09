@@ -89,6 +89,7 @@
 
 use std::fmt;
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
 use crate::errors::r#type::TypeError;
@@ -330,6 +331,7 @@ impl Decimal {
     /// permits) when the plain form would exceed the integer/fraction digit limits, so that a
     /// finite `f64` of any magnitude always reconstructs into a string [`Decimal::validate`]
     /// accepts.
+    #[cfg(feature = "serde")]
     fn format_f64(value: f64) -> String {
         let plain = format!("{value}");
         let unsigned = plain.strip_prefix('-').unwrap_or(&plain);
@@ -391,6 +393,7 @@ impl fmt::Display for Decimal {
     }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for Decimal {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -408,8 +411,10 @@ impl Serialize for Decimal {
     }
 }
 
+#[cfg(feature = "serde")]
 struct DecimalVisitor;
 
+#[cfg(feature = "serde")]
 impl de::Visitor<'_> for DecimalVisitor {
     type Value = Decimal;
 
@@ -466,6 +471,7 @@ impl de::Visitor<'_> for DecimalVisitor {
     }
 }
 
+#[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for Decimal {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

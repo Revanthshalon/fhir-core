@@ -24,6 +24,7 @@
 //! - Use [`TryFrom<&str>`] or [`std::str::FromStr`] to parse from a string slice, which additionally
 //!   validates the FHIR string format (rejecting leading zeros and malformed input).
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::errors::r#type::TypeError;
@@ -49,10 +50,12 @@ mod test;
 /// let invalid = Integer64::try_from("007");
 /// assert!(invalid.is_err());
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Deserialize)]
-#[serde(try_from = "String")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "String"))]
 pub struct Integer64(i64);
 
+#[cfg(feature = "serde")]
 impl Serialize for Integer64 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

@@ -18,6 +18,7 @@
 //! `TypeError::InvalidValue`. For cases where the input is known to be valid, you can use
 //! `Base64Binary::new_unchecked`, which bypasses validation.
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::errors::{FhirCoreResult, r#type::TypeError};
@@ -46,10 +47,12 @@ mod test;
 /// let invalid = Base64Binary::new("TWF");
 /// assert!(invalid.is_err());
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(try_from = "String")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "String"))]
 pub struct Base64Binary(String);
 
+#[cfg(feature = "serde")]
 impl Serialize for Base64Binary {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

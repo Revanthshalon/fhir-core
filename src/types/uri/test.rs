@@ -124,6 +124,7 @@ fn test_ordering_and_equality() {
     assert_ne!(a, b);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let uri = Uri::new("http://example.org").unwrap();
@@ -131,6 +132,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "\"http://example.org\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "\"http://example.org\"";
@@ -138,6 +140,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(uri.as_str(), "http://example.org");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"http://example.org\"";
@@ -145,6 +148,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(uri.as_str(), "http://example.org");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("http://example.org".to_string());
@@ -152,17 +156,20 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(uri.as_str(), "http://example.org");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_empty_string_is_valid() {
     let uri: Uri = serde_json::from_str("\"\"").unwrap();
     assert_eq!(uri.as_str(), "");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Uri>("\"has a space\"").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Uri>("123").is_err());
@@ -172,6 +179,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Uri>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Uri::new("http://example.org/fhir/Patient/123").unwrap();

@@ -21,6 +21,7 @@
 //! containing a [`TypeError::InvalidValue`]. For cases where the input is known to be valid, you can use
 //! [`FhirString::new_unchecked`], which bypasses validation.
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::errors::{FhirCoreResult, r#type::TypeError};
@@ -52,10 +53,12 @@ mod test;
 /// let whitespace_only = FhirString::new("   \t\n  ");
 /// assert!(whitespace_only.is_err());
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
-#[serde(try_from = "String")]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "String"))]
 pub struct FhirString(String);
 
+#[cfg(feature = "serde")]
 impl Serialize for FhirString {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

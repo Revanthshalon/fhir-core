@@ -13,6 +13,7 @@
 //! - Use [`TryFrom<&str>`] or [`std::str::FromStr`] to parse and validate from a string slice.
 //! - Use [`Code::new_unchecked`] when the input is already known to be valid.
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::errors::{FhirCoreResult, r#type::TypeError};
@@ -43,10 +44,12 @@ mod test;
 /// let invalid = Code::new(" active");
 /// assert!(invalid.is_err());
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
-#[serde(try_from = "String")]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "String"))]
 pub struct Code(String);
 
+#[cfg(feature = "serde")]
 impl Serialize for Code {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

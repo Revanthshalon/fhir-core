@@ -173,6 +173,7 @@ fn test_from_str_and_display() {
     assert!(FhirString::from_str("").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let s = FhirString::new("Medical Record").unwrap();
@@ -180,6 +181,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "\"Medical Record\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "\"Medical Record\"";
@@ -187,6 +189,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(s.as_str(), "Medical Record");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"Medical Record\"";
@@ -194,6 +197,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(s.as_str(), "Medical Record");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("Medical Record".to_string());
@@ -201,6 +205,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(s.as_str(), "Medical Record");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_escaped() {
     let json = r#""\u0048\u0065\u006C\u006C\u006F""#;
@@ -208,6 +213,7 @@ fn test_serde_deserialization_escaped() {
     assert_eq!(s.as_str(), "Hello");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     // Empty string
@@ -218,6 +224,7 @@ fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<FhirString>(r#""hello\u0000world""#).is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<FhirString>("123").is_err());
@@ -227,6 +234,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<FhirString>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = FhirString::new("Roundtrip Test! 🚀").unwrap();

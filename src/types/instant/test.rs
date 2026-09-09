@@ -213,6 +213,7 @@ fn test_ordering_and_equality() {
     assert_ne!(a, b);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let instant = Instant::new("2020-05-15T10:30:00Z").unwrap();
@@ -220,6 +221,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "\"2020-05-15T10:30:00Z\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "\"2020-05-15T10:30:00Z\"";
@@ -227,6 +229,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(instant.as_str(), "2020-05-15T10:30:00Z");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"2020-05-15T10:30:00Z\"";
@@ -234,6 +237,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(instant.as_str(), "2020-05-15T10:30:00Z");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("2020-05-15T10:30:00Z".to_string());
@@ -241,6 +245,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(instant.as_str(), "2020-05-15T10:30:00Z");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Instant>("\"\"").is_err());
@@ -248,6 +253,7 @@ fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Instant>("\"2020-05-15T10:30:00\"").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Instant>("123").is_err());
@@ -257,6 +263,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Instant>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Instant::new("2015-02-07T13:28:17.239+02:00").unwrap();

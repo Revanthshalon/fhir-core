@@ -156,6 +156,7 @@ fn test_bounds_constants() {
     assert_eq!(UnsignedInt::MAX, 2_147_483_647);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let u = UnsignedInt::new(42).unwrap();
@@ -163,6 +164,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "42");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "42";
@@ -170,6 +172,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(u.as_u32(), 42);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_boundaries() {
     let max: UnsignedInt = serde_json::from_str("2147483647").unwrap();
@@ -179,17 +182,20 @@ fn test_serde_deserialization_boundaries() {
     assert_eq!(min.as_u32(), 0);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_out_of_range() {
     assert!(serde_json::from_str::<UnsignedInt>("2147483648").is_err());
     assert!(serde_json::from_str::<UnsignedInt>("99999999999").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_negative_rejected() {
     assert!(serde_json::from_str::<UnsignedInt>("-1").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<UnsignedInt>("\"42\"").is_err());
@@ -199,11 +205,13 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<UnsignedInt>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_non_integer_number() {
     assert!(serde_json::from_str::<UnsignedInt>("1.5").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = UnsignedInt::new(12345).unwrap();

@@ -24,12 +24,17 @@
 //! Use [`Extension::new`] to construct a validated instance (checks `ext-1`), or
 //! [`Extension::new_unchecked`] when the fields are already known to satisfy it.
 
+#[cfg(feature = "serde")]
 use serde::de::{Error as DeError, MapAccess, Visitor};
+#[cfg(feature = "serde")]
 use serde::ser::SerializeMap;
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+use crate::datatypes::primitive::Primitive;
+#[cfg(feature = "serde")]
 use crate::datatypes::primitive::{
-    Primitive, PrimitiveCompanion, merge_primitive_entry, serialize_primitive_entry,
+    PrimitiveCompanion, merge_primitive_entry, serialize_primitive_entry,
 };
 use crate::errors::{FhirCoreResult, constraints::ConstraintError};
 use crate::types::{
@@ -101,6 +106,7 @@ pub struct Extension {
     value: Option<ExtensionValue>,
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for Extension {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -184,6 +190,7 @@ impl Serialize for Extension {
 /// Per-type bare-value/companion accumulator pair used while scanning the JSON map.
 /// One pair per `value[x]` type, since a legal document may carry either key alone
 /// (e.g. `_valueBoolean` with no `valueBoolean`, the data-absent-reason pattern) or both.
+#[cfg(feature = "serde")]
 struct ValueSlot<T> {
     value: Option<T>,
     companion: Option<PrimitiveCompanion>,
@@ -191,6 +198,7 @@ struct ValueSlot<T> {
 
 // Manual impl: `#[derive(Default)]` would require `T: Default`, which none of these
 // primitive types implement (and shouldn't need to — an absent slot is just `None`).
+#[cfg(feature = "serde")]
 impl<T> Default for ValueSlot<T> {
     fn default() -> Self {
         Self {
@@ -200,12 +208,14 @@ impl<T> Default for ValueSlot<T> {
     }
 }
 
+#[cfg(feature = "serde")]
 impl<T> ValueSlot<T> {
     fn is_present(&self) -> bool {
         self.value.is_some() || self.companion.is_some()
     }
 }
 
+#[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for Extension {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

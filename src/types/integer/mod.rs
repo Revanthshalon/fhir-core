@@ -21,6 +21,7 @@
 //! - Use [`TryFrom<&str>`] or [`std::str::FromStr`] to parse from a string slice, which additionally
 //!   validates the FHIR string format (rejecting leading zeros and malformed input).
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::errors::r#type::TypeError;
@@ -45,10 +46,9 @@ mod test;
 /// let invalid = Integer::try_from("007");
 /// assert!(invalid.is_err());
 /// ```
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
-)]
-#[serde(transparent)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(transparent))]
 pub struct Integer(i32);
 
 /// Granular errors encountered while validating a FHIR `integer` string representation.

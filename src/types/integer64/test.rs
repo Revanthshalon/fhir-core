@@ -435,6 +435,7 @@ fn test_ordering() {
 // serde: happy paths — integer64 is transmitted as a JSON STRING, not a number
 // ---------------------------------------------------------------------
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization_is_json_string() {
     let i = Integer64::new(42);
@@ -445,6 +446,7 @@ fn test_serde_serialization_is_json_string() {
     assert_eq!(serde_json::to_string(&neg).unwrap(), "\"-42\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization_preserves_precision_at_extremes() {
     let max = Integer64::new(i64::MAX);
@@ -460,6 +462,7 @@ fn test_serde_serialization_preserves_precision_at_extremes() {
     );
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_json_string() {
     let i: Integer64 = serde_json::from_str("\"42\"").unwrap();
@@ -472,6 +475,7 @@ fn test_serde_deserialization_from_json_string() {
     assert_eq!(zero.as_i64(), 0);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_boundaries() {
     let max: Integer64 = serde_json::from_str("\"9223372036854775807\"").unwrap();
@@ -481,6 +485,7 @@ fn test_serde_deserialization_boundaries() {
     assert_eq!(min.as_i64(), i64::MIN);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"7\"";
@@ -488,6 +493,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(i.as_i64(), 7);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("15".to_string());
@@ -495,6 +501,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(i.as_i64(), 15);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     for value in [i64::MIN, -1, 0, 1, i64::MAX] {
@@ -509,6 +516,7 @@ fn test_serde_roundtrip() {
 // serde: negative paths
 // ---------------------------------------------------------------------
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_out_of_range() {
     // Exceeds i64::MAX
@@ -519,6 +527,7 @@ fn test_serde_deserialization_out_of_range() {
     assert!(serde_json::from_str::<Integer64>("\"999999999999999999999999999999\"").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Integer64>("\"\"").is_err());
@@ -527,6 +536,7 @@ fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Integer64>("\"1.5\"").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     // A bare JSON number is invalid — integer64 SHALL be a JSON string.
@@ -537,6 +547,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Integer64>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_malformed_json() {
     assert!(serde_json::from_str::<Integer64>("").is_err());

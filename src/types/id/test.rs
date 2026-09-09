@@ -159,6 +159,7 @@ fn test_ordering_and_equality() {
     assert_ne!(a, b);
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_serialization() {
     let id = Id::new("patient-1234").unwrap();
@@ -166,6 +167,7 @@ fn test_serde_serialization() {
     assert_eq!(json, "\"patient-1234\"");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_str() {
     let json = "\"patient-1234\"";
@@ -173,6 +175,7 @@ fn test_serde_deserialization_from_str() {
     assert_eq!(id.as_str(), "patient-1234");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_reader() {
     let json = b"\"patient-1234\"";
@@ -180,6 +183,7 @@ fn test_serde_deserialization_from_reader() {
     assert_eq!(id.as_str(), "patient-1234");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_from_value() {
     let val = serde_json::Value::String("patient-1234".to_string());
@@ -187,6 +191,7 @@ fn test_serde_deserialization_from_value() {
     assert_eq!(id.as_str(), "patient-1234");
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_value() {
     // Empty string
@@ -198,6 +203,7 @@ fn test_serde_deserialization_invalid_value() {
     assert!(serde_json::from_str::<Id>(&over_max).is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Id>("123").is_err());
@@ -207,6 +213,7 @@ fn test_serde_deserialization_invalid_type() {
     assert!(serde_json::from_str::<Id>("{}").is_err());
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip() {
     let original = Id::new("Roundtrip-Id.123").unwrap();

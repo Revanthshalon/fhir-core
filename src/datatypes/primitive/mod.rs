@@ -21,6 +21,7 @@
 //! [`Primitive::from_value`] for the common "just a value, no metadata" case, which is
 //! infallible since a present value always satisfies `ele-1`.
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::datatypes::complex::Extension;
@@ -37,6 +38,7 @@ mod test;
 /// `Deserialize` impls (e.g. `Extension`'s) represent a `Primitive<T>` across its two
 /// possible JSON keys. See the module docs for why `Primitive<T>` has no `Serialize`/
 /// `Deserialize` of its own.
+#[cfg(feature = "serde")]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub(crate) struct PrimitiveCompanion {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -48,6 +50,7 @@ pub(crate) struct PrimitiveCompanion {
 /// Serializes `primitive` as its `key`/`{underscore_key}` JSON pair into `map`, emitting
 /// only whichever of the two is actually populated. Used by every hand-rolled container
 /// `Serialize` impl (currently just `Extension`) so the split logic lives in one place.
+#[cfg(feature = "serde")]
 pub(crate) fn serialize_primitive_entry<M, T>(
     map: &mut M,
     key: &str,
@@ -74,6 +77,7 @@ where
 /// Merges a candidate bare value and a candidate `_`-prefixed companion (either or both
 /// may be absent) back into one [`Primitive<T>`], validating `ele-1`. Used by every
 /// hand-rolled container `Deserialize` impl once it has scanned both possible JSON keys.
+#[cfg(feature = "serde")]
 pub(crate) fn merge_primitive_entry<T, E>(
     value: Option<T>,
     companion: Option<PrimitiveCompanion>,
