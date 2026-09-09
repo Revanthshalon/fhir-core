@@ -217,6 +217,15 @@ fn test_new_unchecked_as_f64_panics_on_invalid_string() {
 // ---------------------------------------------------------------------
 
 #[test]
+fn test_new_valid_and_invalid() {
+    let d = Decimal::new("4.56").unwrap();
+    assert_eq!(d.as_str(), "4.56");
+
+    assert!(Decimal::new("+42").is_err());
+    assert!(Decimal::new(String::from("not-a-decimal")).is_err());
+}
+
+#[test]
 fn test_try_from_str_valid() {
     let d = Decimal::try_from("4.56").unwrap();
     assert_eq!(d.as_str(), "4.56");

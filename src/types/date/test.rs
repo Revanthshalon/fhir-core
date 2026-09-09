@@ -283,10 +283,51 @@ fn test_serde_roundtrip() {
 
 #[test]
 fn test_date_error_display_formatting() {
-    let err = DateError::InvalidCalendarDate {
-        year: 2020,
-        month: 2,
-        day: 30,
-    };
-    assert_eq!(err.to_string(), "2020-02-30 is not a valid calendar date");
+    assert_eq!(DateError::Empty.to_string(), "date must not be empty");
+    assert_eq!(
+        DateError::InvalidYear {
+            found: "202".to_owned()
+        }
+        .to_string(),
+        "invalid year segment '202': must be 4 digits, not '0000'"
+    );
+    assert_eq!(
+        DateError::InvalidMonth {
+            found: "1X".to_owned()
+        }
+        .to_string(),
+        "invalid month segment '1X': must be 2 digits"
+    );
+    assert_eq!(
+        DateError::MonthOutOfRange { month: 13 }.to_string(),
+        "month 13 out of range: must be 01-12"
+    );
+    assert_eq!(
+        DateError::InvalidDay {
+            found: "1X".to_owned()
+        }
+        .to_string(),
+        "invalid day segment '1X': must be 2 digits"
+    );
+    assert_eq!(
+        DateError::DayOutOfRange { day: 32 }.to_string(),
+        "day 32 out of range: must be 01-31"
+    );
+    assert_eq!(
+        DateError::InvalidCalendarDate {
+            year: 2020,
+            month: 2,
+            day: 30,
+        }
+        .to_string(),
+        "2020-02-30 is not a valid calendar date"
+    );
+    assert_eq!(
+        DateError::UnexpectedCharacter {
+            char: '/',
+            index: 4
+        }
+        .to_string(),
+        "unexpected character '/' at byte index 4"
+    );
 }

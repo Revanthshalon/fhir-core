@@ -435,6 +435,15 @@ fn test_serde_deserialize_nested_children() {
 
 #[cfg(feature = "serde")]
 #[test]
+fn test_serde_deserialize_non_object_fails() {
+    assert!(serde_json::from_str::<Extension>("42").is_err());
+    assert!(serde_json::from_str::<Extension>("null").is_err());
+    assert!(serde_json::from_str::<Extension>("[]").is_err());
+    assert!(serde_json::from_str::<Extension>("\"x\"").is_err());
+}
+
+#[cfg(feature = "serde")]
+#[test]
 fn test_serde_deserialize_missing_url_fails() {
     let json = r#"{"valueBoolean":true}"#;
     let result: Result<Extension, _> = serde_json::from_str(json);

@@ -224,8 +224,43 @@ fn test_serde_roundtrip() {
 
 #[test]
 fn test_oid_error_display_formatting() {
-    let err = OidError::LeadingZeroInArc {
-        found: "01".to_owned(),
-    };
-    assert_eq!(err.to_string(), "arc '01' must not have a leading zero");
+    assert_eq!(OidError::Empty.to_string(), "oid must not be empty");
+    assert_eq!(
+        OidError::MissingPrefix.to_string(),
+        "oid must start with 'urn:oid:'"
+    );
+    assert_eq!(
+        OidError::MissingRootArc.to_string(),
+        "oid is missing a root arc after 'urn:oid:'"
+    );
+    assert_eq!(
+        OidError::InvalidRootArc { found: '3' }.to_string(),
+        "invalid root arc '3': must be '0', '1', or '2'"
+    );
+    assert_eq!(
+        OidError::MissingArc.to_string(),
+        "oid must have at least one arc after the root arc"
+    );
+    assert_eq!(
+        OidError::InvalidArc {
+            found: String::new()
+        }
+        .to_string(),
+        "expected a digit after '.'"
+    );
+    assert_eq!(
+        OidError::LeadingZeroInArc {
+            found: "01".to_owned(),
+        }
+        .to_string(),
+        "arc '01' must not have a leading zero"
+    );
+    assert_eq!(
+        OidError::UnexpectedCharacter {
+            char: 'x',
+            index: 9
+        }
+        .to_string(),
+        "unexpected character 'x' at byte index 9"
+    );
 }

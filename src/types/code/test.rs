@@ -196,6 +196,25 @@ fn test_serde_roundtrip() {
 
 #[test]
 fn test_code_error_display_formatting() {
-    let err = CodeError::ConsecutiveWhitespace { index: 4 };
-    assert_eq!(err.to_string(), "consecutive whitespace at byte index 4");
+    assert_eq!(CodeError::Empty.to_string(), "code must not be empty");
+    assert_eq!(
+        CodeError::LeadingWhitespace.to_string(),
+        "code must not start with whitespace"
+    );
+    assert_eq!(
+        CodeError::TrailingWhitespace.to_string(),
+        "code must not end with whitespace"
+    );
+    assert_eq!(
+        CodeError::ConsecutiveWhitespace { index: 4 }.to_string(),
+        "consecutive whitespace at byte index 4"
+    );
+    assert_eq!(
+        CodeError::DisallowedWhitespaceCharacter {
+            char: '\t',
+            index: 3
+        }
+        .to_string(),
+        "disallowed whitespace character '\\t' at byte index 3; only a single literal space is permitted"
+    );
 }

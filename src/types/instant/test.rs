@@ -29,6 +29,168 @@ fn test_timezone_boundaries() {
 }
 
 #[test]
+fn test_invalid_year() {
+    assert_eq!(
+        Instant::validate("202"),
+        Err(InstantError::InvalidYear {
+            found: "202".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("20X0"),
+        Err(InstantError::InvalidYear {
+            found: "20X0".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("0000"),
+        Err(InstantError::InvalidYear {
+            found: "0000".to_owned()
+        })
+    );
+}
+
+#[test]
+fn test_invalid_month() {
+    assert_eq!(
+        Instant::validate("2020-1"),
+        Err(InstantError::InvalidMonth {
+            found: "1".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-1X"),
+        Err(InstantError::InvalidMonth {
+            found: "1X".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-13"),
+        Err(InstantError::MonthOutOfRange { month: 13 })
+    );
+    assert_eq!(
+        Instant::validate("2020-05X15"),
+        Err(InstantError::UnexpectedCharacter {
+            char: 'X',
+            index: 7
+        })
+    );
+}
+
+#[test]
+fn test_invalid_day() {
+    assert_eq!(
+        Instant::validate("2020-05-1"),
+        Err(InstantError::InvalidDay {
+            found: "1".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-05-1X"),
+        Err(InstantError::InvalidDay {
+            found: "1X".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-05-32"),
+        Err(InstantError::DayOutOfRange { day: 32 })
+    );
+}
+
+#[test]
+fn test_thirty_day_month_calendar_validity() {
+    assert_eq!(Instant::validate("2020-04-30T00:00:00Z"), Ok(()));
+    assert_eq!(
+        Instant::validate("2020-04-31T00:00:00Z"),
+        Err(InstantError::InvalidCalendarDate {
+            year: 2020,
+            month: 4,
+            day: 31
+        })
+    );
+}
+
+#[test]
+fn test_invalid_hour_and_missing_colon_separators() {
+    assert_eq!(
+        Instant::validate("2020-05-15TXX:30:00Z"),
+        Err(InstantError::InvalidHour {
+            found: "XX".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-05-15T10X30:00Z"),
+        Err(InstantError::UnexpectedCharacter {
+            char: 'X',
+            index: 13
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-05-15T10:XX:00Z"),
+        Err(InstantError::InvalidMinute {
+            found: "XX".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-05-15T10:30X00Z"),
+        Err(InstantError::UnexpectedCharacter {
+            char: 'X',
+            index: 16
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-05-15T10:30:XXZ"),
+        Err(InstantError::InvalidSecond {
+            found: "XX".to_owned()
+        })
+    );
+}
+
+#[test]
+fn test_minute_out_of_range() {
+    assert_eq!(
+        Instant::validate("2020-05-15T10:60:00Z"),
+        Err(InstantError::MinuteOutOfRange { minute: 60 })
+    );
+}
+
+#[test]
+fn test_second_out_of_range() {
+    assert_eq!(
+        Instant::validate("2020-05-15T10:30:61Z"),
+        Err(InstantError::SecondOutOfRange { second: 61 })
+    );
+}
+
+#[test]
+fn test_invalid_timezone_shape() {
+    assert_eq!(
+        Instant::validate("2020-05-15T10:30:00+2:00"),
+        Err(InstantError::InvalidTimezone {
+            found: "+2:00".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-05-15T10:30:00+02-00"),
+        Err(InstantError::InvalidTimezone {
+            found: "+02-00".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-05-15T10:30:00+XX:00"),
+        Err(InstantError::InvalidTimezone {
+            found: "+XX:00".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-05-15T10:30:00+02:XX"),
+        Err(InstantError::InvalidTimezone {
+            found: "+02:XX".to_owned()
+        })
+    );
+}
+
+#[test]
 fn test_leap_year() {
     assert_eq!(Instant::validate("2020-02-29T00:00:00Z"), Ok(()));
     assert_eq!(
@@ -122,6 +284,12 @@ fn test_invalid_timezone() {
         Instant::validate("2020-05-15T10:30:00+25:00"),
         Err(InstantError::InvalidTimezone {
             found: "+25:00".to_owned()
+        })
+    );
+    assert_eq!(
+        Instant::validate("2020-05-15T10:30:00X"),
+        Err(InstantError::InvalidTimezone {
+            found: "X".to_owned()
         })
     );
 }
@@ -274,6 +442,116 @@ fn test_serde_roundtrip() {
 
 #[test]
 fn test_instant_error_display_formatting() {
-    let err = InstantError::MissingTimezone;
-    assert_eq!(err.to_string(), "timezone offset is required");
+    assert_eq!(InstantError::Empty.to_string(), "instant must not be empty");
+    assert_eq!(
+        InstantError::Incomplete {
+            found: String::new()
+        }
+        .to_string(),
+        "incomplete instant '': full date and time are required"
+    );
+    assert_eq!(
+        InstantError::InvalidYear {
+            found: "202".to_owned()
+        }
+        .to_string(),
+        "invalid year segment '202': must be 4 digits, not '0000'"
+    );
+    assert_eq!(
+        InstantError::InvalidMonth {
+            found: "1X".to_owned()
+        }
+        .to_string(),
+        "invalid month segment '1X': must be 2 digits"
+    );
+    assert_eq!(
+        InstantError::MonthOutOfRange { month: 13 }.to_string(),
+        "month 13 out of range: must be 01-12"
+    );
+    assert_eq!(
+        InstantError::InvalidDay {
+            found: "1X".to_owned()
+        }
+        .to_string(),
+        "invalid day segment '1X': must be 2 digits"
+    );
+    assert_eq!(
+        InstantError::DayOutOfRange { day: 32 }.to_string(),
+        "day 32 out of range: must be 01-31"
+    );
+    assert_eq!(
+        InstantError::InvalidCalendarDate {
+            year: 2020,
+            month: 2,
+            day: 30
+        }
+        .to_string(),
+        "2020-02-30 is not a valid calendar date"
+    );
+    assert_eq!(
+        InstantError::IncompleteTime {
+            found: "10:30".to_owned()
+        }
+        .to_string(),
+        "incomplete time-of-day '10:30': expected hh:mm:ss"
+    );
+    assert_eq!(
+        InstantError::InvalidHour {
+            found: "XX".to_owned()
+        }
+        .to_string(),
+        "invalid hour segment 'XX': must be 2 digits"
+    );
+    assert_eq!(
+        InstantError::HourOutOfRange { hour: 24 }.to_string(),
+        "hour 24 out of range: must be 00-23"
+    );
+    assert_eq!(
+        InstantError::InvalidMinute {
+            found: "XX".to_owned()
+        }
+        .to_string(),
+        "invalid minute segment 'XX': must be 2 digits"
+    );
+    assert_eq!(
+        InstantError::MinuteOutOfRange { minute: 60 }.to_string(),
+        "minute 60 out of range: must be 00-59"
+    );
+    assert_eq!(
+        InstantError::InvalidSecond {
+            found: "XX".to_owned()
+        }
+        .to_string(),
+        "invalid second segment 'XX': must be 2 digits"
+    );
+    assert_eq!(
+        InstantError::SecondOutOfRange { second: 61 }.to_string(),
+        "second 61 out of range: must be 00-60 (60 permitted for leap seconds)"
+    );
+    assert_eq!(
+        InstantError::InvalidFractionalSeconds {
+            found: String::new()
+        }
+        .to_string(),
+        "invalid fractional seconds '': must be 1-9 digits"
+    );
+    assert_eq!(
+        InstantError::MissingTimezone.to_string(),
+        "timezone offset is required"
+    );
+    assert_eq!(
+        InstantError::InvalidTimezone {
+            found: "X".to_owned()
+        }
+        .to_string(),
+        "invalid timezone offset 'X': must be 'Z' or '(+|-)hh:mm' in -14:00..=+14:00"
+    );
+    assert_eq!(
+        InstantError::UnexpectedCharacter {
+            char: '/',
+            index: 4
+        }
+        .to_string(),
+        "unexpected character '/' at byte index 4"
+    );
 }

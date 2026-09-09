@@ -70,6 +70,44 @@ fn test_second_out_of_range() {
 }
 
 #[test]
+fn test_invalid_minute_non_digit() {
+    assert_eq!(
+        Time::validate("12:XX:00"),
+        Err(TimeError::InvalidMinute {
+            found: "XX".to_owned()
+        })
+    );
+}
+
+#[test]
+fn test_invalid_second_non_digit() {
+    assert_eq!(
+        Time::validate("12:00:XX"),
+        Err(TimeError::InvalidSecond {
+            found: "XX".to_owned()
+        })
+    );
+}
+
+#[test]
+fn test_missing_colon_separators() {
+    assert_eq!(
+        Time::validate("12X00:00"),
+        Err(TimeError::UnexpectedCharacter {
+            char: 'X',
+            index: 2
+        })
+    );
+    assert_eq!(
+        Time::validate("12:00X00"),
+        Err(TimeError::UnexpectedCharacter {
+            char: 'X',
+            index: 5
+        })
+    );
+}
+
+#[test]
 fn test_negative_time_rejected() {
     assert_eq!(
         Time::validate("-01:00:00"),
@@ -250,9 +288,60 @@ fn test_serde_roundtrip() {
 
 #[test]
 fn test_time_error_display_formatting() {
-    let err = TimeError::SecondOutOfRange { second: 61 };
+    assert_eq!(TimeError::Empty.to_string(), "time must not be empty");
     assert_eq!(
-        err.to_string(),
+        TimeError::Incomplete {
+            found: "12:00".to_owned()
+        }
+        .to_string(),
+        "incomplete time '12:00': expected hh:mm:ss"
+    );
+    assert_eq!(
+        TimeError::InvalidHour {
+            found: "-0".to_owned()
+        }
+        .to_string(),
+        "invalid hour segment '-0': must be 2 digits"
+    );
+    assert_eq!(
+        TimeError::HourOutOfRange { hour: 24 }.to_string(),
+        "hour 24 out of range: must be 00-23 ('24:00' is forbidden)"
+    );
+    assert_eq!(
+        TimeError::InvalidMinute {
+            found: "XX".to_owned()
+        }
+        .to_string(),
+        "invalid minute segment 'XX': must be 2 digits"
+    );
+    assert_eq!(
+        TimeError::MinuteOutOfRange { minute: 60 }.to_string(),
+        "minute 60 out of range: must be 00-59"
+    );
+    assert_eq!(
+        TimeError::InvalidSecond {
+            found: "XX".to_owned()
+        }
+        .to_string(),
+        "invalid second segment 'XX': must be 2 digits"
+    );
+    assert_eq!(
+        TimeError::SecondOutOfRange { second: 61 }.to_string(),
         "second 61 out of range: must be 00-60 (60 permitted for leap seconds)"
+    );
+    assert_eq!(
+        TimeError::InvalidFractionalSeconds {
+            found: String::new()
+        }
+        .to_string(),
+        "invalid fractional seconds '': must be 1-9 digits"
+    );
+    assert_eq!(
+        TimeError::UnexpectedCharacter {
+            char: 'Z',
+            index: 8
+        }
+        .to_string(),
+        "unexpected character 'Z' at byte index 8: a timezone offset is not permitted on 'time'"
     );
 }

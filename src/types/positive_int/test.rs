@@ -234,6 +234,24 @@ fn test_serde_roundtrip() {
 
 #[test]
 fn test_positive_int_error_display_formatting() {
-    let err = PositiveIntError::OutOfRange;
-    assert_eq!(err.to_string(), "value exceeds the maximum of 2147483647");
+    assert_eq!(
+        PositiveIntError::Empty.to_string(),
+        "positiveInt string must not be empty"
+    );
+    assert_eq!(
+        PositiveIntError::NotPositive.to_string(),
+        "positiveInt must not be 0"
+    );
+    assert_eq!(
+        PositiveIntError::LeadingZero.to_string(),
+        "positiveInt must not have a leading zero"
+    );
+    assert_eq!(
+        PositiveIntError::InvalidFormat.to_string(),
+        "not a valid positiveInt representation"
+    );
+    assert_eq!(
+        PositiveIntError::OutOfRange.to_string(),
+        "value exceeds the maximum of 2147483647"
+    );
 }
