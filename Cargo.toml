@@ -16,6 +16,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["r5", "serde"]
+r4 = []
 r5 = []
 serde = ["dep:serde"]
 
