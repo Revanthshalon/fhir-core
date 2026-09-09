@@ -13,6 +13,6 @@ doc:
 	RUSTDOCFLAGS="-D missing_docs" cargo doc --no-deps --all-features
 
 coverage:
-	cargo tarpaulin --all-features --engine llvm --skip-clean
+	cargo tarpaulin --all-features --engine llvm --skip-clean --out Lcov
 
 check: fmt clippy test doc
