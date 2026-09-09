@@ -111,6 +111,24 @@ primitive-valued properties eligible for the JSON companion pattern (§4.2).
 `Extension.id` stays a plain `FhirString` — the spec special-cases `Element.id` as an
 ordinary property, never itself companion-wrapped.
 
+#### Known gap: unrecognized `value[x]` is dropped on deserialize
+
+Any `value*`/`_value*` JSON key this crate doesn't yet model (one of the 34 remaining
+complex types, or a future primitive) is currently discarded via `IgnoredAny` in
+`Extension`'s `Deserialize` impl — deserializing then re-serializing such an `Extension`
+loses that value. Verified against spec (hl7.org/fhir/R5/extensibility.html §2.1.5.0.3):
+retention is a **SHOULD** ("systems SHOULD retain unknown extensions when they are
+capable of doing so"), not a MUST — there is no hard lossless round-trip mandate, so this
+is a capability gap, not a spec violation.
+
+Considered fix: an `ExtensionValue::Unknown(String)` catch-all capturing the raw scalar
+value. Deferred — it only covers scalar `value*` shapes, not the object-shaped complex
+types that make up most of the gap, and it conflicts with this crate's pattern of every
+`ExtensionValue` variant being a validated newtype rather than an untyped escape hatch.
+Revisit once the first complex type lands (§4.1's "natural second consumer" point) —
+either the complex-type variants close the gap directly, or an explicit decision to add
+an `Unknown` fallback gets made then, with real callers to judge the tradeoff against.
+
 ### 4.2 `Primitive<T>`
 
 `{ value: Option<T>, id: Option<FhirString>, extension: Vec<Extension> }` — what every
