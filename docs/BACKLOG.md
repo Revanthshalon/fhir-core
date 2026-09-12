@@ -45,26 +45,37 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
   see `docs/LLD.md` §4 for why (a prior speculative attempt didn't compile and
   leaked an invariant). Design bottom-up when a real consumer needs it.
 - **Remaining complex types** (`Coding`, `CodeableConcept`, `Identifier`,
-  `Period`, `Quantity`, `Reference`): only `Extension` is real today. Doc-only
-  stubs for the rest now exist at `src/datatypes/complex/{coding,
-  codeable_concept,identifier,period,quantity,reference}/mod.rs` — private
-  modules (not part of the public API yet, `#![allow(dead_code)]`'d since
-  nothing constructs them), each with a struct matching its field list below
-  and a module doc citing the spec. See `docs/LLD.md` §4.1 for why they aren't
-  *implemented* yet — construction, `ele-1`/invariant validation, accessors,
-  and serde are still deliberately missing. When one *is* picked up: re-verify
-  its module doc against the live spec first (this crate's rule, not
-  optional), then implement, then flip its `mod` to `pub mod` and re-export it
+  `Quantity`, `Reference`): `Extension` and `Period` are real; the rest are
+  doc-only stubs at `src/datatypes/complex/{coding,codeable_concept,
+  identifier,quantity,reference}/mod.rs` — private modules (not part of the
+  public API yet, `#![allow(dead_code)]`'d since nothing constructs them),
+  each with a struct matching its field list below and a module doc citing
+  the spec. See `docs/LLD.md` §4.1 for why they aren't *implemented* yet —
+  construction, invariant validation, accessors, and serde are still
+  deliberately missing. When one *is* picked up: re-verify its module doc
+  against the live spec first (this crate's rule, not optional), then
+  implement following `Period`'s shape (`src/datatypes/complex/period/mod.rs`)
+  as the reference example, then flip its `mod` to `pub mod` and re-export it
   from `src/datatypes/complex/mod.rs`. Dependency order (fields verified
   against hl7.org/fhir/R5/datatypes.html and hl7.org/fhir/R5/references.html
   on 2026-09-12; each still needs its own module-doc-cited re-verification per
   this crate's spec-driven-not-memory-driven rule when actually implemented):
 
-  1. **`Period`** — `start: Option<Primitive<DateTime>>`,
-     `end: Option<Primitive<DateTime>>`. No named invariant in the spec text,
-     but `end` (if present) must not precede `start` (if present) — implement
-     as an unnamed validated constructor check, not a skipped rule. No
-     dependencies on other complex types — good first pick.
+  1. ~~**`Period`**~~ — **done.** `start: Option<Primitive<DateTime>>`,
+     `end: Option<Primitive<DateTime>>`, plus the `id`/`extension` every
+     `Element` carries. Named invariant `per-1` (`start` <= `end`, compared via
+     FHIRPath's `lowBoundary()`/`highBoundary()`) exists but is **not**
+     validated — `DateTime` has no boundary-expansion/true chronological
+     comparison, and its derived `Ord` is plain string order, only correct
+     when both values share precision and timezone. Faking `per-1` with that
+     would be worse than not checking; see the module's "Known gap" doc.
+     Only `ele-1` (at least one of `start`/`end`/`extension`) is enforced.
+     Wired into `Extension` as `ExtensionValue::Period` (embeds the whole
+     object under `valuePeriod`, no companion split — only primitives get
+     that). **Correction**: an earlier version of this entry said Period had
+     "no named invariant" — wrong, `per-1` exists at
+     hl7.org/fhir/R5/datatypes-definitions.html#Period.end; the earlier check
+     only looked at datatypes.html, which doesn't list invariants inline.
   2. **`Coding`** — `system: Option<Primitive<Uri>>`,
      `version: Option<Primitive<FhirString>>`, `code: Option<Primitive<Code>>`,
      `display: Option<Primitive<FhirString>>`,

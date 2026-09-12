@@ -13,9 +13,11 @@
 //!   never gets a `_id` companion — the spec special-cases `Element.id` this way.
 //!
 //! # Scope
-//! [`ExtensionValue`] currently covers only the 20 FHIR primitives, because those are
-//! the only types this crate has implemented so far — not the full 54 the spec allows.
-//! A complex-type variant (`Coding`, `Quantity`, `Period`, ...) is added the moment that
+//! [`ExtensionValue`] currently covers the 20 FHIR primitives plus
+//! [`Period`] — the only types this crate has
+//! implemented so far, not the full 54 the spec allows. A complex-type variant embeds
+//! the type directly (e.g. `valuePeriod` is one JSON object, not a bare/`_`-prefixed
+//! companion pair — only primitives get that split) and is added the moment that
 //! complex type is built, not before; `Extension` is the natural second consumer for
 //! each one. See `docs/LLD.md` §4 for the rationale against building this speculatively
 //! ahead of real consumers.
@@ -31,6 +33,7 @@ use serde::ser::SerializeMap;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+use crate::datatypes::complex::period::Period;
 use crate::datatypes::primitive::Primitive;
 #[cfg(feature = "serde")]
 use crate::datatypes::primitive::{
@@ -80,6 +83,9 @@ pub enum ExtensionValue {
     Markdown(Primitive<Markdown>),
     /// `valueOid`
     Oid(Primitive<Oid>),
+    /// `valuePeriod` — embedded directly as one JSON object, not a bare/`_`-prefixed
+    /// companion pair (only primitives get that split).
+    Period(Period),
     /// `valuePositiveInt`
     PositiveInt(Primitive<PositiveInt>),
     /// `valueString`
@@ -163,6 +169,9 @@ impl Serialize for Extension {
             }
             Some(ExtensionValue::Oid(p)) => {
                 serialize_primitive_entry(&mut map, "valueOid", "_valueOid", p)?;
+            }
+            Some(ExtensionValue::Period(p)) => {
+                map.serialize_entry("valuePeriod", p)?;
             }
             Some(ExtensionValue::PositiveInt(p)) => {
                 serialize_primitive_entry(&mut map, "valuePositiveInt", "_valuePositiveInt", p)?;
@@ -256,6 +265,7 @@ impl<'de> Deserialize<'de> for Extension {
                 let mut integer64: ValueSlot<Integer64> = ValueSlot::default();
                 let mut markdown: ValueSlot<Markdown> = ValueSlot::default();
                 let mut oid: ValueSlot<Oid> = ValueSlot::default();
+                let mut period: Option<Period> = None;
                 let mut positive_int: ValueSlot<PositiveInt> = ValueSlot::default();
                 let mut string: ValueSlot<FhirString> = ValueSlot::default();
                 let mut time: ValueSlot<Time> = ValueSlot::default();
@@ -298,6 +308,7 @@ impl<'de> Deserialize<'de> for Extension {
                         "_valueMarkdown" => markdown.companion = Some(map.next_value()?),
                         "valueOid" => oid.value = Some(map.next_value()?),
                         "_valueOid" => oid.companion = Some(map.next_value()?),
+                        "valuePeriod" => period = Some(map.next_value()?),
                         "valuePositiveInt" => positive_int.value = Some(map.next_value()?),
                         "_valuePositiveInt" => positive_int.companion = Some(map.next_value()?),
                         "valueString" => string.value = Some(map.next_value()?),
@@ -338,6 +349,7 @@ impl<'de> Deserialize<'de> for Extension {
                     integer64.is_present(),
                     markdown.is_present(),
                     oid.is_present(),
+                    period.is_some(),
                     positive_int.is_present(),
                     string.is_present(),
                     time.is_present(),
@@ -415,6 +427,8 @@ impl<'de> Deserialize<'de> for Extension {
                         oid.value,
                         oid.companion,
                     )?))
+                } else if let Some(period) = period {
+                    Some(ExtensionValue::Period(period))
                 } else if positive_int.is_present() {
                     Some(ExtensionValue::PositiveInt(merge_primitive_entry(
                         positive_int.value,
