@@ -45,9 +45,17 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
   see `docs/LLD.md` §4 for why (a prior speculative attempt didn't compile and
   leaked an invariant). Design bottom-up when a real consumer needs it.
 - **Remaining complex types** (`Coding`, `CodeableConcept`, `Identifier`,
-  `Period`, `Quantity`, `Reference`): only `Extension` exists today. See
-  `docs/LLD.md` §4.1 — each becomes real when something needs it, not before.
-  When one *is* picked up, build in this dependency order (fields verified
+  `Period`, `Quantity`, `Reference`): only `Extension` is real today. Doc-only
+  stubs for the rest now exist at `src/datatypes/complex/{coding,
+  codeable_concept,identifier,period,quantity,reference}/mod.rs` — private
+  modules (not part of the public API yet, `#![allow(dead_code)]`'d since
+  nothing constructs them), each with a struct matching its field list below
+  and a module doc citing the spec. See `docs/LLD.md` §4.1 for why they aren't
+  *implemented* yet — construction, `ele-1`/invariant validation, accessors,
+  and serde are still deliberately missing. When one *is* picked up: re-verify
+  its module doc against the live spec first (this crate's rule, not
+  optional), then implement, then flip its `mod` to `pub mod` and re-export it
+  from `src/datatypes/complex/mod.rs`. Dependency order (fields verified
   against hl7.org/fhir/R5/datatypes.html and hl7.org/fhir/R5/references.html
   on 2026-09-12; each still needs its own module-doc-cited re-verification per
   this crate's spec-driven-not-memory-driven rule when actually implemented):
