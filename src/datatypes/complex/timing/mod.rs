@@ -1,0 +1,74 @@
+//! The FHIR `Timing` complex data type.
+//!
+//! # FHIR R5 specification (hl7.org/fhir/R5/datatypes.html#Timing)
+//! - Top-level fields: `event` (0..*, `dateTime`), `code` (0..1,
+//!   [`CodeableConcept`](crate::datatypes::complex::codeable_concept::CodeableConcept)),
+//!   `repeat` (0..1, nested [`TimingRepeat`]), plus `id`/`extension`.
+//! - `TimingRepeat` (a `BackboneElement`, not a standalone named type): `bounds[x]`
+//!   (0..1, choice of [`Duration`](crate::datatypes::complex::duration::Duration),
+//!   [`Range`](crate::datatypes::complex::range::Range), or
+//!   [`Period`](crate::datatypes::complex::period::Period)), `count` (0..1,
+//!   `positiveInt`), `countMax` (0..1, `positiveInt`), `duration` (0..1, `decimal`),
+//!   `durationMax` (0..1, `decimal`), `durationUnit` (0..1, `code`), `frequency`
+//!   (0..1, `positiveInt`), `frequencyMax` (0..1, `positiveInt`), `period` (0..1,
+//!   `decimal`), `periodMax` (0..1, `decimal`), `periodUnit` (0..1, `code`),
+//!   `dayOfWeek` (0..*, `code`), `timeOfDay` (0..*, `time`), `when` (0..*, `code`),
+//!   `offset` (0..1, `unsignedInt`).
+//! - Named invariants not yet checked (spec historically has `tim-1`/`tim-...`-style
+//!   rules coupling `durationMax`/`frequencyMax`/`periodMax` to their base fields) —
+//!   re-verify before implementing.
+//!
+//! # Status
+//! Stub only — not wired into [`complex`](crate::datatypes::complex) yet. See
+//! `docs/BACKLOG.md` Roadmap before implementing: re-verify against the live spec,
+//! then add the constructor, accessors, and serde. Depends on `CodeableConcept`,
+//! `Duration`, `Range`, `Period`.
+
+#![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
+
+use crate::datatypes::complex::codeable_concept::CodeableConcept;
+use crate::datatypes::complex::duration::Duration;
+use crate::datatypes::complex::period::Period;
+use crate::datatypes::complex::range::Range;
+use crate::datatypes::primitive::Primitive;
+use crate::types::{Code, DateTime, Decimal, PositiveInt, Time, UnsignedInt};
+
+/// The value carried by `Timing.repeat.bounds[x]`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TimingBounds {
+    /// `boundsDuration`
+    Duration(Duration),
+    /// `boundsRange`
+    Range(Box<Range>),
+    /// `boundsPeriod`
+    Period(Period),
+}
+
+/// `Timing.repeat`, a nested `BackboneElement`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TimingRepeat {
+    bounds: Option<TimingBounds>,
+    count: Option<Primitive<PositiveInt>>,
+    count_max: Option<Primitive<PositiveInt>>,
+    duration: Option<Primitive<Decimal>>,
+    duration_max: Option<Primitive<Decimal>>,
+    duration_unit: Option<Primitive<Code>>,
+    frequency: Option<Primitive<PositiveInt>>,
+    frequency_max: Option<Primitive<PositiveInt>>,
+    period: Option<Primitive<Decimal>>,
+    period_max: Option<Primitive<Decimal>>,
+    period_unit: Option<Primitive<Code>>,
+    day_of_week: Vec<Primitive<Code>>,
+    time_of_day: Vec<Primitive<Time>>,
+    when: Vec<Primitive<Code>>,
+    offset: Option<Primitive<UnsignedInt>>,
+}
+
+/// The FHIR `Timing` complex data type: a schedule of events, either explicit or
+/// described by a repeating pattern.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Timing {
+    event: Vec<Primitive<DateTime>>,
+    code: Option<CodeableConcept>,
+    repeat: Option<TimingRepeat>,
+}

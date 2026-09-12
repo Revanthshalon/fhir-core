@@ -40,7 +40,10 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
   grammars match. Audit each before claiming real `r4` support.
 - **`xhtml` primitive not implemented**: FHIR R5 defines 21 primitive types;
   this crate has 20 (`docs/TECH_DESIGN.md` §3 says "20" — not a doc error, just
-  an uncovered type). Low priority — `xhtml` only backs `Narrative.div`.
+  an uncovered type). Low priority — `xhtml` only backs `Narrative.div`. The
+  `Narrative` stub (`src/datatypes/complex/narrative/mod.rs`) uses `FhirString`
+  as an explicitly-flagged placeholder for `div` until this is fixed —
+  implementing `Narrative` for real is blocked on this, not just unscheduled.
 - **`Base`/`Element`/`Resource` trait hierarchy**: intentionally undesigned —
   see `docs/LLD.md` §4 for why (a prior speculative attempt didn't compile and
   leaked an invariant). Design bottom-up when a real consumer needs it.
@@ -48,11 +51,8 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
   All seven originally-scoped complex types (`Extension`, `Period`, `Coding`,
   `Quantity`, `CodeableConcept`, `Identifier`, `Reference`) are implemented,
   each with a validating constructor, accessors, and hand-rolled serde, and
-  each wired into `Extension` as an `ExtensionValue` variant. The other ~28
-  complex types the spec defines (`Attachment`, `Address`, `ContactPoint`,
-  `Money`, ...) are not stubbed or built — new ones get designed only when a
-  real consumer needs them (`docs/LLD.md` §4), not speculatively ahead of
-  time. Kept below for the field/invariant research trail (dependency order,
+  each wired into `Extension` as an `ExtensionValue` variant. Kept below for
+  the field/invariant research trail (dependency order,
   fields verified against hl7.org/fhir/R5/datatypes.html and
   hl7.org/fhir/R5/references.html on 2026-09-12):
 
@@ -131,6 +131,26 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
          accepted without verifying it resolves.
      Both wired into `Extension` as `ExtensionValue::Identifier`/`::Reference`
      (each embeds the whole object, no companion split).
+
+- **All other FHIR R5 complex/metadata/special-purpose types are now doc-only
+  stubs** (34 of them — general-purpose types like `HumanName`/`Address`/
+  `Attachment`/`Timing`/`Dosage`, metadata types like `DataRequirement`/
+  `TriggerDefinition`/`UsageContext`/`Expression`, and special-purpose types
+  `Meta`/`Narrative`/`ElementDefinition`), same pattern as the original six:
+  private modules under `src/datatypes/complex/`, real fields,
+  `#![allow(dead_code)]`, module docs citing spec URLs, none implemented
+  (no constructor/validation/accessors/serde), none wired into `Extension`.
+  Two are blocked on more than just "not picked up yet": `Narrative.div`
+  needs the unimplemented `xhtml` primitive (see the roadmap item above), and
+  `ElementDefinition` is intentionally a *partial* stub (only ~20 of its ~50
+  fields) given its exceptional size and different domain (profiling, not
+  instance data). Several fields were cross-checked against a non-pinned
+  continuous-build page rather than the frozen R5 5.0.0 page (flagged
+  per-module where that happened: `Expression`, `ParameterDefinition`,
+  `RelatedArtifact`, `TriggerDefinition`) — re-verify those harder than usual
+  before implementing. One real type from the earlier draft list doesn't
+  exist in R5 at all: `Contributor` was removed after R4 — confirmed via
+  metadatatypes-definitions.html, not stubbed here.
 - **`Extension` drops unrecognized `value[x]`** on deserialize (lossy
   round-trip for the ~28 complex types this crate still doesn't model, now
   that `Period`/`Coding`/`Quantity`/`CodeableConcept`/`Identifier`/`Reference`
