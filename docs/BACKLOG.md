@@ -27,3 +27,27 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
   (or equivalent), gate it behind `feature = "r4"` following the existing
   primitive pattern, and correct `docs/LLD.md`/`docs/TDD.md` to describe each
   version's grammar against the type that actually implements it.
+- **Note**: a single `Base64Binary::validate` cannot just `#[cfg(feature =
+  "r4")]`/`#[cfg(feature = "r5")]` two bodies — both features are additive and
+  CI builds `--all-features`, so both would be compiled at once (duplicate
+  definition). Confirms the type-per-spec shape above, not a cfg split.
+
+## Roadmap: other known-pending work (not yet backlog-worthy, tracked for visibility)
+
+- **`r4` primitives beyond `base64Binary` are unaudited**: only `base64Binary`'s
+  R4-vs-R5 grammar difference has been checked against spec so far. The other
+  19 primitives were built R5-first; nobody has verified whether their R4
+  grammars match. Audit each before claiming real `r4` support.
+- **`xhtml` primitive not implemented**: FHIR R5 defines 21 primitive types;
+  this crate has 20 (`docs/TECH_DESIGN.md` §3 says "20" — not a doc error, just
+  an uncovered type). Low priority — `xhtml` only backs `Narrative.div`.
+- **`Base`/`Element`/`Resource` trait hierarchy**: intentionally undesigned —
+  see `docs/LLD.md` §4 for why (a prior speculative attempt didn't compile and
+  leaked an invariant). Design bottom-up when a real consumer needs it.
+- **Remaining complex types** (`Coding`, `CodeableConcept`, `Identifier`,
+  `Period`, `Quantity`, `Reference`): only `Extension` exists today. See
+  `docs/LLD.md` §4.1 — each becomes real when something needs it, not before.
+- **`Extension` drops unrecognized `value[x]`** on deserialize (lossy
+  round-trip for the 34 complex types this crate doesn't model yet). Spec-legal
+  (SHOULD, not MUST) but a real gap — see `docs/LLD.md` §4.1 "Known gap".
+  Revisit once the first complex type lands.
