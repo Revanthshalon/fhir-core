@@ -32,6 +32,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::codeable_concept::CodeableConcept;
 use crate::datatypes::complex::coding::Coding;
 use crate::datatypes::complex::duration::Duration;
@@ -58,38 +59,55 @@ pub enum DataRequirementDateValue {
     /// `valuePeriod`
     Period(Period),
     /// `valueDuration`
-    Duration(Duration),
+    Duration(Box<Duration>),
 }
 
-/// `DataRequirement.codeFilter`, a nested `BackboneElement`.
+/// `DataRequirement.codeFilter`, a nested `BackboneElement` — carries
+/// `modifierExtension` in addition to `id`/`extension`, unlike plain `Element`-derived
+/// types.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CodeFilter {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
+    modifier_extension: Vec<Extension>,
     path: Option<Primitive<FhirString>>,
     search_param: Option<Primitive<FhirString>>,
     value_set: Option<Primitive<Canonical>>,
     code: Vec<Coding>,
 }
 
-/// `DataRequirement.dateFilter`, a nested `BackboneElement`.
+/// `DataRequirement.dateFilter`, a nested `BackboneElement` — carries
+/// `modifierExtension` in addition to `id`/`extension`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DateFilter {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
+    modifier_extension: Vec<Extension>,
     path: Option<Primitive<FhirString>>,
     search_param: Option<Primitive<FhirString>>,
     value: Option<DataRequirementDateValue>,
 }
 
-/// `DataRequirement.valueFilter`, a nested `BackboneElement`.
+/// `DataRequirement.valueFilter`, a nested `BackboneElement` — carries
+/// `modifierExtension` in addition to `id`/`extension`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ValueFilter {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
+    modifier_extension: Vec<Extension>,
     path: Option<Primitive<FhirString>>,
     search_param: Option<Primitive<FhirString>>,
     comparator: Option<Primitive<Code>>,
     value: Option<DataRequirementDateValue>,
 }
 
-/// `DataRequirement.sort`, a nested `BackboneElement`.
+/// `DataRequirement.sort`, a nested `BackboneElement` — carries `modifierExtension` in
+/// addition to `id`/`extension`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sort {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
+    modifier_extension: Vec<Extension>,
     path: Option<Primitive<FhirString>>,
     direction: Option<Primitive<Code>>,
 }
@@ -98,6 +116,8 @@ pub struct Sort {
 /// knowledge module.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DataRequirement {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     r#type: Option<Primitive<Code>>,
     profile: Vec<Primitive<Canonical>>,
     subject: Option<DataRequirementSubject>,

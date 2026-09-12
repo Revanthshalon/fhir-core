@@ -18,15 +18,18 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::codeable_concept::CodeableConcept;
 use crate::datatypes::complex::money::Money;
 use crate::datatypes::primitive::Primitive;
-use crate::types::{Code, Decimal};
+use crate::types::{Code, Decimal, FhirString};
 
 /// The FHIR `MonetaryComponent` metadata type: one component (tax, discount, ...) of
 /// a total monetary amount.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MonetaryComponent {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     r#type: Option<Primitive<Code>>,
     code: Option<CodeableConcept>,
     factor: Option<Primitive<Decimal>>,

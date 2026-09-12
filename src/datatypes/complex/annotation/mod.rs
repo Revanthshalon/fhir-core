@@ -16,6 +16,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::reference::Reference;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{DateTime, FhirString, Markdown};
@@ -33,6 +34,8 @@ pub enum AnnotationAuthor {
 /// timestamp.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Annotation {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     author: Option<AnnotationAuthor>,
     time: Option<Primitive<DateTime>>,
     text: Option<Primitive<Markdown>>,

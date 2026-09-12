@@ -12,12 +12,15 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::primitive::Primitive;
-use crate::types::{Code, Decimal};
+use crate::types::{Code, Decimal, FhirString};
 
 /// The FHIR `Money` complex data type: a decimal amount in a named currency.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Money {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     value: Option<Primitive<Decimal>>,
     currency: Option<Primitive<Code>>,
 }

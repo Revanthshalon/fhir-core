@@ -34,12 +34,17 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{Boolean, Code, FhirString, Id, Integer, Markdown, UnsignedInt, Uri};
 
-/// `ElementDefinition.base`, a nested `BackboneElement`.
+/// `ElementDefinition.base`, a nested `BackboneElement` — carries `modifierExtension`
+/// in addition to `id`/`extension`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ElementBase {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
+    modifier_extension: Vec<Extension>,
     path: Option<Primitive<FhirString>>,
     min: Option<Primitive<UnsignedInt>>,
     max: Option<Primitive<FhirString>>,
@@ -48,8 +53,18 @@ pub struct ElementBase {
 /// The FHIR `ElementDefinition` special-purpose data type: defines the constraints on
 /// an element in a resource or data type (used by `StructureDefinition`). See the
 /// module docs — this stub covers only a representative subset of fields.
+///
+/// Includes `modifier_extension`: `ElementDefinition`'s base type is `BackboneType`
+/// (confirmed via elementdefinition-definitions.html), which — like `BackboneElement`
+/// — carries `modifierExtension` in addition to the `id`/`extension` every `Element`
+/// has. A secondary summarized fetch claimed no `modifierExtension` field is listed;
+/// re-verify directly against the field table before implementing, given that
+/// contradiction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ElementDefinition {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
+    modifier_extension: Vec<Extension>,
     path: Option<Primitive<FhirString>>,
     representation: Vec<Primitive<Code>>,
     slice_name: Option<Primitive<FhirString>>,

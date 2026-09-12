@@ -14,14 +14,17 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::coding::Coding;
 use crate::datatypes::primitive::Primitive;
-use crate::types::{Canonical, Id, Instant, Uri};
+use crate::types::{Canonical, FhirString, Id, Instant, Uri};
 
 /// The FHIR `Meta` special-purpose data type: version-independent metadata about a
 /// resource.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Meta {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     version_id: Option<Primitive<Id>>,
     last_updated: Option<Primitive<Instant>>,
     source: Option<Primitive<Uri>>,

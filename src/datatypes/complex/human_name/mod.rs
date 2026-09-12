@@ -16,6 +16,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::period::Period;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{Code, FhirString};
@@ -24,6 +25,8 @@ use crate::types::{Code, FhirString};
 /// parts and usage.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HumanName {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     r#use: Option<Primitive<Code>>,
     text: Option<Primitive<FhirString>>,
     family: Option<Primitive<FhirString>>,

@@ -21,6 +21,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{Code, FhirString};
 
@@ -28,6 +29,8 @@ use crate::types::{Code, FhirString};
 /// resource, generated and/or authored.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Narrative {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     status: Option<Primitive<Code>>,
     /// Placeholder for the real `xhtml`-typed `div` field — see module docs.
     div: Option<Primitive<FhirString>>,

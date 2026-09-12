@@ -26,27 +26,32 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::codeable_concept::CodeableConcept;
 use crate::datatypes::complex::duration::Duration;
 use crate::datatypes::complex::period::Period;
 use crate::datatypes::complex::range::Range;
 use crate::datatypes::primitive::Primitive;
-use crate::types::{Code, DateTime, Decimal, PositiveInt, Time, UnsignedInt};
+use crate::types::{Code, DateTime, Decimal, FhirString, PositiveInt, Time, UnsignedInt};
 
 /// The value carried by `Timing.repeat.bounds[x]`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TimingBounds {
     /// `boundsDuration`
-    Duration(Duration),
+    Duration(Box<Duration>),
     /// `boundsRange`
     Range(Box<Range>),
     /// `boundsPeriod`
     Period(Period),
 }
 
-/// `Timing.repeat`, a nested `BackboneElement`.
+/// `Timing.repeat`, a nested `BackboneElement` — carries `modifierExtension` in
+/// addition to `id`/`extension`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TimingRepeat {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
+    modifier_extension: Vec<Extension>,
     bounds: Option<TimingBounds>,
     count: Option<Primitive<PositiveInt>>,
     count_max: Option<Primitive<PositiveInt>>,
@@ -68,6 +73,8 @@ pub struct TimingRepeat {
 /// described by a repeating pattern.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Timing {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     event: Vec<Primitive<DateTime>>,
     code: Option<CodeableConcept>,
     repeat: Option<TimingRepeat>,

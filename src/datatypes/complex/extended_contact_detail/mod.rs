@@ -20,17 +20,21 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::address::Address;
 use crate::datatypes::complex::codeable_concept::CodeableConcept;
 use crate::datatypes::complex::contact_point::ContactPoint;
 use crate::datatypes::complex::human_name::HumanName;
 use crate::datatypes::complex::period::Period;
 use crate::datatypes::complex::reference::Reference;
+use crate::types::FhirString;
 
 /// The FHIR `ExtendedContactDetail` metadata type: contact information for a specific
 /// purpose, optionally scoped to a time period.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExtendedContactDetail {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     purpose: Option<CodeableConcept>,
     name: Vec<HumanName>,
     telecom: Vec<ContactPoint>,

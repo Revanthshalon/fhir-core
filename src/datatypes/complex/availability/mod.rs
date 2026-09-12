@@ -21,22 +21,33 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::period::Period;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{Boolean, Code, FhirString, Time};
 
-/// `Availability.availableTime`, a nested `BackboneElement`.
+/// `Availability.availableTime`, a nested `BackboneElement` — carries
+/// `modifierExtension` in addition to `id`/`extension`, unlike plain `Element`-derived
+/// types.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AvailableTime {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
+    modifier_extension: Vec<Extension>,
     days_of_week: Vec<Primitive<Code>>,
     all_day: Option<Primitive<Boolean>>,
     available_start_time: Option<Primitive<Time>>,
     available_end_time: Option<Primitive<Time>>,
 }
 
-/// `Availability.notAvailableTime`, a nested `BackboneElement`.
+/// `Availability.notAvailableTime`, a nested `BackboneElement` — carries
+/// `modifierExtension` in addition to `id`/`extension`, unlike plain `Element`-derived
+/// types.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NotAvailableTime {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
+    modifier_extension: Vec<Extension>,
     description: Option<Primitive<FhirString>>,
     during: Option<Period>,
 }
@@ -45,6 +56,8 @@ pub struct NotAvailableTime {
 /// (and isn't) available.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Availability {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     available_time: Vec<AvailableTime>,
     not_available_time: Vec<NotAvailableTime>,
 }

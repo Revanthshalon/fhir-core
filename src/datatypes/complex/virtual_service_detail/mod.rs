@@ -19,6 +19,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::coding::Coding;
 use crate::datatypes::complex::contact_point::ContactPoint;
 use crate::datatypes::complex::extended_contact_detail::ExtendedContactDetail;
@@ -42,6 +43,8 @@ pub enum VirtualServiceAddress {
 /// or service.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VirtualServiceDetail {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     channel_type: Option<Coding>,
     address: Option<VirtualServiceAddress>,
     additional_info: Vec<Primitive<Url>>,

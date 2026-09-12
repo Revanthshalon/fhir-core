@@ -30,6 +30,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::codeable_concept::CodeableConcept;
 use crate::datatypes::complex::range::Range;
 use crate::datatypes::complex::ratio::Ratio;
@@ -58,9 +59,13 @@ pub enum DoseAndRateRate {
     Quantity(SimpleQuantity),
 }
 
-/// `Dosage.doseAndRate`, a nested `BackboneElement`.
+/// `Dosage.doseAndRate`, a nested `BackboneElement` — carries `modifierExtension` in
+/// addition to `id`/`extension`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DoseAndRate {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
+    modifier_extension: Vec<Extension>,
     r#type: Option<CodeableConcept>,
     dose: Option<DoseAndRateDose>,
     rate: Option<DoseAndRateRate>,
@@ -69,6 +74,8 @@ pub struct DoseAndRate {
 /// The FHIR `Dosage` complex data type: how a medication should be administered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dosage {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     sequence: Option<Primitive<Integer>>,
     text: Option<Primitive<FhirString>>,
     additional_instruction: Vec<CodeableConcept>,

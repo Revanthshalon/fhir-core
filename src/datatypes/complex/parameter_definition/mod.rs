@@ -18,6 +18,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{Canonical, Code, FhirString, Integer};
 
@@ -25,6 +26,8 @@ use crate::types::{Canonical, Code, FhirString, Integer};
 /// module (e.g. an `OperationDefinition` or `PlanDefinition` action).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParameterDefinition {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     name: Option<Primitive<Code>>,
     r#use: Option<Primitive<Code>>,
     min: Option<Primitive<Integer>>,

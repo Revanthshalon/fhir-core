@@ -13,6 +13,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{Code, Decimal, FhirString, Uri};
 
@@ -20,6 +21,8 @@ use crate::types::{Code, Decimal, FhirString, Uri};
 /// a `comparator` (`sqty-1`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimpleQuantity {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     value: Option<Primitive<Decimal>>,
     unit: Option<Primitive<FhirString>>,
     system: Option<Primitive<Uri>>,

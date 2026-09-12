@@ -16,6 +16,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::contact_point::ContactPoint;
 use crate::datatypes::primitive::Primitive;
 use crate::types::FhirString;
@@ -24,6 +25,8 @@ use crate::types::FhirString;
 /// organization, used to describe artifact authors etc.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContactDetail {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     name: Option<Primitive<FhirString>>,
     telecom: Vec<ContactPoint>,
 }

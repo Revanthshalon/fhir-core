@@ -22,6 +22,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::attachment::Attachment;
 use crate::datatypes::complex::reference::Reference;
 use crate::datatypes::primitive::Primitive;
@@ -31,6 +32,8 @@ use crate::types::{Canonical, Code, FhirString, Markdown, Url};
 /// artifact, and how it relates.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RelatedArtifact {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     r#type: Option<Primitive<Code>>,
     label: Option<Primitive<FhirString>>,
     display: Option<Primitive<FhirString>>,

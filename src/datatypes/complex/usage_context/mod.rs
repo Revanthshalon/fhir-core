@@ -20,13 +20,14 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::codeable_concept::CodeableConcept;
 use crate::datatypes::complex::coding::Coding;
 use crate::datatypes::complex::quantity::Quantity;
 use crate::datatypes::complex::range::Range;
 use crate::datatypes::complex::reference::Reference;
 use crate::datatypes::primitive::Primitive;
-use crate::types::Canonical;
+use crate::types::{Canonical, FhirString};
 
 /// The value carried by `UsageContext.value[x]`.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,7 +37,7 @@ pub enum UsageContextValue {
     /// `valueQuantity`
     Quantity(Quantity),
     /// `valueRange`
-    Range(Range),
+    Range(Box<Range>),
     /// `valueReference`
     Reference(Reference),
     /// `valueCanonical`
@@ -47,6 +48,8 @@ pub enum UsageContextValue {
 /// conformance/knowledge artifact.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UsageContext {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     code: Option<Coding>,
     value: Option<UsageContextValue>,
 }

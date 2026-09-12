@@ -12,12 +12,15 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{Code, Decimal, FhirString, Uri};
 
 /// The FHIR `Distance` complex data type: a `Quantity` constrained to a length unit.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Distance {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     value: Option<Primitive<Decimal>>,
     comparator: Option<Primitive<Code>>,
     unit: Option<Primitive<FhirString>>,

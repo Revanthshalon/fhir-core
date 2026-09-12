@@ -15,6 +15,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::period::Period;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{Code, FhirString, PositiveInt};
@@ -23,6 +24,8 @@ use crate::types::{Code, FhirString, PositiveInt};
 /// (phone, fax, email, etc.).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContactPoint {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     system: Option<Primitive<Code>>,
     value: Option<Primitive<FhirString>>,
     r#use: Option<Primitive<Code>>,

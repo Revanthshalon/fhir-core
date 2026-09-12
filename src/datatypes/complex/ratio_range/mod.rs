@@ -15,12 +15,16 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::simple_quantity::SimpleQuantity;
+use crate::types::FhirString;
 
 /// The FHIR `RatioRange` complex data type: a ratio expressed as a bounded numerator
 /// range over a fixed denominator.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RatioRange {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     low_numerator: Option<SimpleQuantity>,
     high_numerator: Option<SimpleQuantity>,
     denominator: Option<SimpleQuantity>,

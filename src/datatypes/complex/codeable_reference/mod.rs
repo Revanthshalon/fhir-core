@@ -18,13 +18,17 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::codeable_concept::CodeableConcept;
 use crate::datatypes::complex::reference::Reference;
+use crate::types::FhirString;
 
 /// The FHIR `CodeableReference` complex data type: either (or both) a general
 /// classification concept and a specific resource reference.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CodeableReference {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     concept: Option<CodeableConcept>,
     reference: Option<Reference>,
 }

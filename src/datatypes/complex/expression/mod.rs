@@ -18,12 +18,15 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{Code, FhirString, Uri};
 
 /// The FHIR `Expression` metadata type: a computable, language-tagged expression.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Expression {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     description: Option<Primitive<FhirString>>,
     name: Option<Primitive<Code>>,
     language: Option<Primitive<Code>>,

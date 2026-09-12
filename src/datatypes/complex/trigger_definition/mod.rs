@@ -31,6 +31,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::codeable_concept::CodeableConcept;
 use crate::datatypes::complex::data_requirement::DataRequirement;
 use crate::datatypes::complex::expression::Expression;
@@ -53,6 +54,8 @@ pub enum TriggerTiming {
 /// module's execution.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TriggerDefinition {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     r#type: Option<Primitive<Code>>,
     name: Option<Primitive<FhirString>>,
     code: Option<CodeableConcept>,

@@ -18,15 +18,18 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::coding::Coding;
 use crate::datatypes::complex::reference::Reference;
 use crate::datatypes::primitive::Primitive;
-use crate::types::{Base64Binary, Code, Instant};
+use crate::types::{Base64Binary, Code, FhirString, Instant};
 
 /// The FHIR `Signature` complex data type: a digital signature along with supporting
 /// context.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Signature {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     r#type: Vec<Coding>,
     when: Option<Primitive<Instant>>,
     who: Option<Reference>,

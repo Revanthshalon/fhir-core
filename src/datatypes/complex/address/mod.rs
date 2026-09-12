@@ -17,6 +17,7 @@
 
 #![allow(dead_code)] // stub: not constructed until this type is implemented, see module docs
 
+use crate::datatypes::complex::Extension;
 use crate::datatypes::complex::period::Period;
 use crate::datatypes::primitive::Primitive;
 use crate::types::{Code, FhirString};
@@ -24,6 +25,8 @@ use crate::types::{Code, FhirString};
 /// The FHIR `Address` complex data type: a postal address.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Address {
+    id: Option<FhirString>,
+    extension: Vec<Extension>,
     r#use: Option<Primitive<Code>>,
     r#type: Option<Primitive<Code>>,
     text: Option<Primitive<FhirString>>,
