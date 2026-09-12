@@ -47,6 +47,58 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
 - **Remaining complex types** (`Coding`, `CodeableConcept`, `Identifier`,
   `Period`, `Quantity`, `Reference`): only `Extension` exists today. See
   `docs/LLD.md` §4.1 — each becomes real when something needs it, not before.
+  When one *is* picked up, build in this dependency order (fields verified
+  against hl7.org/fhir/R5/datatypes.html and hl7.org/fhir/R5/references.html
+  on 2026-09-12; each still needs its own module-doc-cited re-verification per
+  this crate's spec-driven-not-memory-driven rule when actually implemented):
+
+  1. **`Period`** — `start: Option<Primitive<DateTime>>`,
+     `end: Option<Primitive<DateTime>>`. No named invariant in the spec text,
+     but `end` (if present) must not precede `start` (if present) — implement
+     as an unnamed validated constructor check, not a skipped rule. No
+     dependencies on other complex types — good first pick.
+  2. **`Coding`** — `system: Option<Primitive<Uri>>`,
+     `version: Option<Primitive<FhirString>>`, `code: Option<Primitive<Code>>`,
+     `display: Option<Primitive<FhirString>>`,
+     `userSelected: Option<Primitive<Boolean>>`. No named invariants. No
+     dependencies.
+  3. **`Quantity`** — `value: Option<Primitive<Decimal>>`,
+     `comparator: Option<Primitive<Code>>`, `unit: Option<Primitive<FhirString>>`,
+     `system: Option<Primitive<Uri>>`, `code: Option<Primitive<Code>>`. No named
+     invariants found on the datatypes page; re-check
+     hl7.org/fhir/R5/datatypes-definitions.html#Quantity for aut-1/qty-3-style
+     comparator/system+code coupling rules before assuming none exist. No
+     dependencies.
+  4. **`CodeableConcept`** — `coding: Vec<Coding>`,
+     `text: Option<Primitive<FhirString>>`. No named invariants. Depends on
+     `Coding` (step 2).
+  5. **`Identifier`** and **`Reference`** — mutually dependent
+     (`Identifier.assigner: Option<Box<Reference>>`,
+     `Reference.identifier: Option<Box<Identifier>>`; `Box` needed since each
+     embeds the other by value once — otherwise an infinite-size type), so
+     design together as one step, after `CodeableConcept` and `Period`:
+     - `Identifier`: `use: Option<Primitive<Code>>`,
+       `type: Option<CodeableConcept>`, `system: Option<Primitive<Uri>>`,
+       `value: Option<Primitive<FhirString>>`, `period: Option<Period>`,
+       `assigner: Option<Box<Reference>>`. No named invariants.
+     - `Reference`: `reference: Option<Primitive<FhirString>>`,
+       `type: Option<Primitive<Uri>>`, `identifier: Option<Box<Identifier>>`,
+       `display: Option<Primitive<FhirString>>`. Two named invariants:
+       - `ref-2` (implementable now): `reference.exists() or identifier.exists()
+         or display.exists() or extension.exists()` — at least one of the four
+         must be present. Enforce in a validating constructor, same shape as
+         `Extension::validate_ext1`.
+       - `ref-1` (**not implementable at this crate's scope**): requires
+         `%rootResource`/`%resource` — validating a local (`#id`) reference
+         against sibling `contained` resources needs whole-resource-tree
+         context this crate doesn't have (no `Resource`/`contained` model
+         yet, see the `Base`/`Element`/`Resource` roadmap item above).
+         Document as a known gap on `Reference`, don't fake it with a stub
+         check.
+  Every step also needs: `Extension`'s `Serialize`/`Deserialize` gains a
+  variant on `ExtensionValue` the moment each type above lands (`Extension` is
+  the "natural second consumer" per `docs/LLD.md` §4.1), and the `Extension`
+  unrecognized-`value[x]` gap (last bullet below) shrinks by one type each time.
 - **`Extension` drops unrecognized `value[x]`** on deserialize (lossy
   round-trip for the 34 complex types this crate doesn't model yet). Spec-legal
   (SHOULD, not MUST) but a real gap — see `docs/LLD.md` §4.1 "Known gap".
