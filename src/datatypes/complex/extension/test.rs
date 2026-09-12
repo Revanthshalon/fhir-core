@@ -210,6 +210,15 @@ fn all_extension_values() -> Vec<ExtensionValue> {
             Canonical::new("http://example.org").unwrap(),
         )),
         ExtensionValue::Code(Primitive::from_value(Code::new("active").unwrap())),
+        ExtensionValue::CodeableConcept(
+            crate::datatypes::complex::CodeableConcept::new(
+                Vec::new(),
+                Some(Primitive::from_value(FhirString::new("Active").unwrap())),
+                None,
+                Vec::new(),
+            )
+            .unwrap(),
+        ),
         ExtensionValue::Coding(
             Coding::new(
                 None,

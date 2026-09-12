@@ -44,11 +44,11 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
 - **`Base`/`Element`/`Resource` trait hierarchy**: intentionally undesigned —
   see `docs/LLD.md` §4 for why (a prior speculative attempt didn't compile and
   leaked an invariant). Design bottom-up when a real consumer needs it.
-- **Remaining complex types** (`CodeableConcept`, `Identifier`, `Reference`):
-  `Extension`, `Period`, `Coding`, and `Quantity` are real; the rest are
-  doc-only stubs at `src/datatypes/complex/{codeable_concept,identifier,
-  reference}/mod.rs` — private modules (not part of the public API
-  yet, `#![allow(dead_code)]`'d since nothing constructs them),
+- **Remaining complex types** (`Identifier`, `Reference`): `Extension`,
+  `Period`, `Coding`, `Quantity`, and `CodeableConcept` are real; the rest are
+  doc-only stubs at `src/datatypes/complex/{identifier,reference}/mod.rs` —
+  private modules (not part of the public API yet,
+  `#![allow(dead_code)]`'d since nothing constructs them),
   each with a struct matching its field list below and a module doc citing
   the spec. See `docs/LLD.md` §4.1 for why they aren't *implemented* yet —
   construction, invariant validation, accessors, and serde are still
@@ -101,9 +101,13 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
      invariants found on datatypes-definitions.html). Wired into `Extension`
      as `ExtensionValue::Quantity` (embeds the whole object under
      `valueQuantity`, no companion split).
-  4. **`CodeableConcept`** — `coding: Vec<Coding>`,
-     `text: Option<Primitive<FhirString>>`. No named invariants. Depends on
-     `Coding` (step 2).
+  4. ~~**`CodeableConcept`**~~ — **done.** `coding: Vec<Coding>`,
+     `text: Option<Primitive<FhirString>>`, plus `id`/`extension`. No named
+     invariants for `CodeableConcept` itself (double-checked against
+     datatypes-definitions.html) — the only nearby invariant, `cod-1`, belongs
+     to `Coding` and is already handled there. Only `ele-1` is validated.
+     Wired into `Extension` as `ExtensionValue::CodeableConcept` (embeds the
+     whole object under `valueCodeableConcept`, no companion split).
   5. **`Identifier`** and **`Reference`** — mutually dependent
      (`Identifier.assigner: Option<Box<Reference>>`,
      `Reference.identifier: Option<Box<Identifier>>`; `Box` needed since each
