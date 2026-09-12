@@ -8,53 +8,50 @@ use super::*;
 
 #[test]
 fn test_validate_zero() {
-    assert_eq!(Integer64::validate("0"), Ok(0));
+    assert_eq!(Integer64::parse("0"), Ok(0));
 }
 
 #[test]
 fn test_validate_positive_without_sign() {
-    assert_eq!(Integer64::validate("1"), Ok(1));
-    assert_eq!(Integer64::validate("42"), Ok(42));
-    assert_eq!(Integer64::validate("123456789"), Ok(123_456_789));
+    assert_eq!(Integer64::parse("1"), Ok(1));
+    assert_eq!(Integer64::parse("42"), Ok(42));
+    assert_eq!(Integer64::parse("123456789"), Ok(123_456_789));
 }
 
 #[test]
 fn test_validate_positive_with_explicit_sign() {
-    assert_eq!(Integer64::validate("+1"), Ok(1));
-    assert_eq!(Integer64::validate("+42"), Ok(42));
+    assert_eq!(Integer64::parse("+1"), Ok(1));
+    assert_eq!(Integer64::parse("+42"), Ok(42));
 }
 
 #[test]
 fn test_validate_negative() {
-    assert_eq!(Integer64::validate("-1"), Ok(-1));
-    assert_eq!(Integer64::validate("-42"), Ok(-42));
-    assert_eq!(Integer64::validate("-123456789"), Ok(-123_456_789));
+    assert_eq!(Integer64::parse("-1"), Ok(-1));
+    assert_eq!(Integer64::parse("-42"), Ok(-42));
+    assert_eq!(Integer64::parse("-123456789"), Ok(-123_456_789));
 }
 
 #[test]
 fn test_validate_range_boundaries() {
-    assert_eq!(Integer64::validate("9223372036854775807"), Ok(i64::MAX));
-    assert_eq!(Integer64::validate("+9223372036854775807"), Ok(i64::MAX));
-    assert_eq!(Integer64::validate("-9223372036854775808"), Ok(i64::MIN));
+    assert_eq!(Integer64::parse("9223372036854775807"), Ok(i64::MAX));
+    assert_eq!(Integer64::parse("+9223372036854775807"), Ok(i64::MAX));
+    assert_eq!(Integer64::parse("-9223372036854775808"), Ok(i64::MIN));
 }
 
 #[test]
 fn test_validate_single_digits() {
     for d in 0..=9u8 {
         let s = d.to_string();
-        assert_eq!(Integer64::validate(&s), Ok(d as i64));
+        assert_eq!(Integer64::parse(&s), Ok(d as i64));
     }
 }
 
 #[test]
 fn test_validate_large_values_beyond_i32_range() {
     // Values that would overflow i32 but are valid for i64 — the whole point of this type.
-    assert_eq!(Integer64::validate("2147483648"), Ok(2_147_483_648));
-    assert_eq!(Integer64::validate("-2147483649"), Ok(-2_147_483_649));
-    assert_eq!(
-        Integer64::validate("123456789012345"),
-        Ok(123_456_789_012_345)
-    );
+    assert_eq!(Integer64::parse("2147483648"), Ok(2_147_483_648));
+    assert_eq!(Integer64::parse("-2147483649"), Ok(-2_147_483_649));
+    assert_eq!(Integer64::parse("123456789012345"), Ok(123_456_789_012_345));
 }
 
 // ---------------------------------------------------------------------
@@ -63,69 +60,45 @@ fn test_validate_large_values_beyond_i32_range() {
 
 #[test]
 fn test_validate_empty_string() {
-    assert_eq!(Integer64::validate(""), Err(Integer64Error::Empty));
+    assert_eq!(Integer64::parse(""), Err(Integer64Error::Empty));
 }
 
 #[test]
 fn test_validate_lone_sign() {
-    assert_eq!(Integer64::validate("+"), Err(Integer64Error::InvalidFormat));
-    assert_eq!(Integer64::validate("-"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("+"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("-"), Err(Integer64Error::InvalidFormat));
 }
 
 #[test]
 fn test_validate_signed_zero_rejected() {
     // Per the FHIR regex `[0]|[-+]?[1-9][0-9]*`, only a bare "0" matches — a signed zero
     // matches neither alternative and must be rejected.
-    assert_eq!(
-        Integer64::validate("+0"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("-0"),
-        Err(Integer64Error::InvalidFormat)
-    );
+    assert_eq!(Integer64::parse("+0"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("-0"), Err(Integer64Error::InvalidFormat));
     assert!(Integer64::try_from("+0").is_err());
     assert!(Integer64::try_from("-0").is_err());
 }
 
 #[test]
 fn test_validate_float_values_rejected() {
-    assert_eq!(
-        Integer64::validate("1.0"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("1.5"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("-1.5"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate(".5"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("5."),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("1e10"),
-        Err(Integer64Error::InvalidFormat)
-    );
+    assert_eq!(Integer64::parse("1.0"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("1.5"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("-1.5"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse(".5"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("5."), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("1e10"), Err(Integer64Error::InvalidFormat));
 }
 
 #[test]
 fn test_validate_negative_extreme_underflow() {
     // Comfortably beyond i64::MIN.
     assert_eq!(
-        Integer64::validate("-999999999999999999999999999999"),
+        Integer64::parse("-999999999999999999999999999999"),
         Err(Integer64Error::OutOfRange)
     );
     // One below i64::MIN.
     assert_eq!(
-        Integer64::validate("-9223372036854775809"),
+        Integer64::parse("-9223372036854775809"),
         Err(Integer64Error::OutOfRange)
     );
 }
@@ -134,146 +107,89 @@ fn test_validate_negative_extreme_underflow() {
 fn test_validate_positive_extreme_overflow() {
     // One above i64::MAX.
     assert_eq!(
-        Integer64::validate("9223372036854775808"),
+        Integer64::parse("9223372036854775808"),
         Err(Integer64Error::OutOfRange)
     );
     assert_eq!(
-        Integer64::validate("999999999999999999999999999999"),
+        Integer64::parse("999999999999999999999999999999"),
         Err(Integer64Error::OutOfRange)
     );
 }
 
 #[test]
 fn test_validate_whitespace_around_signed_integers() {
+    assert_eq!(Integer64::parse(" +1"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("+1 "), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse(" -1"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("-1 "), Err(Integer64Error::InvalidFormat));
     assert_eq!(
-        Integer64::validate(" +1"),
+        Integer64::parse("\t+1\t"),
         Err(Integer64Error::InvalidFormat)
     );
     assert_eq!(
-        Integer64::validate("+1 "),
+        Integer64::parse("\n-1\n"),
         Err(Integer64Error::InvalidFormat)
     );
-    assert_eq!(
-        Integer64::validate(" -1"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("-1 "),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("\t+1\t"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("\n-1\n"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("+ 1"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("- 1"),
-        Err(Integer64Error::InvalidFormat)
-    );
+    assert_eq!(Integer64::parse("+ 1"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("- 1"), Err(Integer64Error::InvalidFormat));
 }
 
 #[test]
 fn test_validate_control_characters() {
+    assert_eq!(Integer64::parse("1\0"), Err(Integer64Error::InvalidFormat));
     assert_eq!(
-        Integer64::validate("1\0"),
+        Integer64::parse("\x001"),
         Err(Integer64Error::InvalidFormat)
     );
     assert_eq!(
-        Integer64::validate("\x001"),
+        Integer64::parse("+1\u{0008}"),
         Err(Integer64Error::InvalidFormat)
     );
     assert_eq!(
-        Integer64::validate("+1\u{0008}"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("-\u{001B}1"),
+        Integer64::parse("-\u{001B}1"),
         Err(Integer64Error::InvalidFormat)
     );
 }
 
 #[test]
 fn test_validate_mixed_double_signs() {
-    assert_eq!(
-        Integer64::validate("++1"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("--1"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("+-1"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("-+1"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("+-+1"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("-+-1"),
-        Err(Integer64Error::InvalidFormat)
-    );
+    assert_eq!(Integer64::parse("++1"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("--1"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("+-1"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("-+1"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("+-+1"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("-+-1"), Err(Integer64Error::InvalidFormat));
 }
 
 #[test]
 fn test_validate_leading_zero() {
-    assert_eq!(Integer64::validate("01"), Err(Integer64Error::LeadingZero));
-    assert_eq!(Integer64::validate("007"), Err(Integer64Error::LeadingZero));
-    assert_eq!(Integer64::validate("+01"), Err(Integer64Error::LeadingZero));
-    assert_eq!(Integer64::validate("-01"), Err(Integer64Error::LeadingZero));
-    assert_eq!(Integer64::validate("00"), Err(Integer64Error::LeadingZero));
+    assert_eq!(Integer64::parse("01"), Err(Integer64Error::LeadingZero));
+    assert_eq!(Integer64::parse("007"), Err(Integer64Error::LeadingZero));
+    assert_eq!(Integer64::parse("+01"), Err(Integer64Error::LeadingZero));
+    assert_eq!(Integer64::parse("-01"), Err(Integer64Error::LeadingZero));
+    assert_eq!(Integer64::parse("00"), Err(Integer64Error::LeadingZero));
 }
 
 #[test]
 fn test_validate_non_digit_characters() {
-    assert_eq!(
-        Integer64::validate("abc"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("12a"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("a12"),
-        Err(Integer64Error::InvalidFormat)
-    );
+    assert_eq!(Integer64::parse("abc"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("12a"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("a12"), Err(Integer64Error::InvalidFormat));
 }
 
 #[test]
 fn test_validate_internal_whitespace() {
-    assert_eq!(
-        Integer64::validate("1 2"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate(" 12"),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(
-        Integer64::validate("12 "),
-        Err(Integer64Error::InvalidFormat)
-    );
-    assert_eq!(Integer64::validate(" "), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("1 2"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse(" 12"), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse("12 "), Err(Integer64Error::InvalidFormat));
+    assert_eq!(Integer64::parse(" "), Err(Integer64Error::InvalidFormat));
 }
 
 #[test]
 fn test_validate_unicode_digits_rejected() {
     // Full-width Unicode digit (U+FF11 "1") is not an ASCII digit.
     assert_eq!(
-        Integer64::validate("\u{FF11}"),
+        Integer64::parse("\u{FF11}"),
         Err(Integer64Error::InvalidFormat)
     );
 }
@@ -552,4 +468,14 @@ fn test_serde_deserialization_invalid_type() {
 fn test_serde_deserialization_malformed_json() {
     assert!(serde_json::from_str::<Integer64>("").is_err());
     assert!(serde_json::from_str::<Integer64>("abc").is_err());
+}
+
+#[test]
+fn test_validate_returns_unit_on_success() {
+    assert_eq!(Integer64::validate("42"), Ok(()));
+}
+
+#[test]
+fn test_validate_returns_same_error_as_parse() {
+    assert_eq!(Integer64::validate(""), Err(Integer64Error::Empty));
 }

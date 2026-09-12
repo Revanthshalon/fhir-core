@@ -124,6 +124,27 @@ impl UnsignedInt {
 
     /// Validates whether a given string is compliant with the FHIR `unsignedInt` format.
     ///
+    /// # Errors
+    /// Returns [`UnsignedIntError`] describing the exact failure reason if the string
+    /// does not match the FHIR `unsignedInt` regex (`[0]|([1-9][0-9]*)`) or falls
+    /// outside `0..=2,147,483,647`. Use [`UnsignedInt::parse`] to also obtain the
+    /// parsed value, or [`TryFrom<&str>`] to obtain a validated `UnsignedInt`
+    /// directly.
+    ///
+    /// # Examples
+    /// ```
+    /// use fhir_core::types::UnsignedInt;
+    ///
+    /// assert!(UnsignedInt::validate("0").is_ok());
+    /// assert!(UnsignedInt::validate("007").is_err());
+    /// ```
+    pub fn validate(value: &str) -> Result<(), UnsignedIntError> {
+        Self::parse(value).map(|_| ())
+    }
+
+    /// Parses a string into the `u32` value it represents, per the FHIR
+    /// `unsignedInt` format.
+    ///
     /// # Returns
     /// - `Ok(u32)` with the parsed value if the string matches the FHIR `unsignedInt`
     ///   regex (`[0]|([1-9][0-9]*)`) and falls within `0..=2,147,483,647`.
@@ -133,11 +154,11 @@ impl UnsignedInt {
     /// ```
     /// use fhir_core::types::UnsignedInt;
     ///
-    /// assert_eq!(UnsignedInt::validate("0"), Ok(0));
-    /// assert_eq!(UnsignedInt::validate("42"), Ok(42));
-    /// assert!(UnsignedInt::validate("007").is_err());
+    /// assert_eq!(UnsignedInt::parse("0"), Ok(0));
+    /// assert_eq!(UnsignedInt::parse("42"), Ok(42));
+    /// assert!(UnsignedInt::parse("007").is_err());
     /// ```
-    pub fn validate(value: &str) -> Result<u32, UnsignedIntError> {
+    pub fn parse(value: &str) -> Result<u32, UnsignedIntError> {
         if value.is_empty() {
             return Err(UnsignedIntError::Empty);
         }
@@ -195,7 +216,7 @@ impl TryFrom<&str> for UnsignedInt {
     type Error = TypeError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Self::validate(value)
+        Self::parse(value)
             .map(Self)
             .map_err(|e| TypeError::InvalidValue {
                 r#type: "unsignedInt".to_owned(),

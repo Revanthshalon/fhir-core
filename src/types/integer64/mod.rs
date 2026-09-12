@@ -147,6 +147,27 @@ impl Integer64 {
 
     /// Validates whether a given string is compliant with the FHIR `integer64` format.
     ///
+    /// # Errors
+    /// Returns [`Integer64Error`] describing the exact failure reason if the string
+    /// does not match the FHIR `integer64` regex (`[0]|[-+]?[1-9][0-9]*`) or falls
+    /// outside the 64-bit signed integer range. Use [`Integer64::parse`] to also
+    /// obtain the parsed value, or [`TryFrom<&str>`] to obtain a validated
+    /// `Integer64` directly.
+    ///
+    /// # Examples
+    /// ```
+    /// use fhir_core::types::Integer64;
+    ///
+    /// assert!(Integer64::validate("0").is_ok());
+    /// assert!(Integer64::validate("007").is_err());
+    /// ```
+    pub fn validate(value: &str) -> Result<(), Integer64Error> {
+        Self::parse(value).map(|_| ())
+    }
+
+    /// Parses a string into the `i64` value it represents, per the FHIR `integer64`
+    /// format.
+    ///
     /// # Returns
     /// - `Ok(i64)` with the parsed value if the string matches the FHIR `integer64` regex
     ///   (`[0]|[-+]?[1-9][0-9]*`) and fits within the 64-bit signed integer range.
@@ -156,11 +177,11 @@ impl Integer64 {
     /// ```
     /// use fhir_core::types::Integer64;
     ///
-    /// assert_eq!(Integer64::validate("0"), Ok(0));
-    /// assert_eq!(Integer64::validate("-42"), Ok(-42));
-    /// assert!(Integer64::validate("007").is_err());
+    /// assert_eq!(Integer64::parse("0"), Ok(0));
+    /// assert_eq!(Integer64::parse("-42"), Ok(-42));
+    /// assert!(Integer64::parse("007").is_err());
     /// ```
-    pub fn validate(value: &str) -> Result<i64, Integer64Error> {
+    pub fn parse(value: &str) -> Result<i64, Integer64Error> {
         if value.is_empty() {
             return Err(Integer64Error::Empty);
         }
@@ -223,7 +244,7 @@ impl TryFrom<&str> for Integer64 {
     /// Returns [`TypeError::InvalidValue`] if the input string is empty, malformed, contains a
     /// disallowed leading zero, or falls outside the 64-bit signed integer range.
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Self::validate(value)
+        Self::parse(value)
             .map(Self)
             .map_err(|e| TypeError::InvalidValue {
                 r#type: "integer64".to_owned(),

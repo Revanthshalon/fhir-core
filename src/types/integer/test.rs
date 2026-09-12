@@ -4,41 +4,41 @@ use super::*;
 
 #[test]
 fn test_validate_zero() {
-    assert_eq!(Integer::validate("0"), Ok(0));
+    assert_eq!(Integer::parse("0"), Ok(0));
 }
 
 #[test]
 fn test_validate_positive_without_sign() {
-    assert_eq!(Integer::validate("1"), Ok(1));
-    assert_eq!(Integer::validate("42"), Ok(42));
-    assert_eq!(Integer::validate("123456789"), Ok(123_456_789));
+    assert_eq!(Integer::parse("1"), Ok(1));
+    assert_eq!(Integer::parse("42"), Ok(42));
+    assert_eq!(Integer::parse("123456789"), Ok(123_456_789));
 }
 
 #[test]
 fn test_validate_positive_with_explicit_sign() {
-    assert_eq!(Integer::validate("+1"), Ok(1));
-    assert_eq!(Integer::validate("+42"), Ok(42));
+    assert_eq!(Integer::parse("+1"), Ok(1));
+    assert_eq!(Integer::parse("+42"), Ok(42));
 }
 
 #[test]
 fn test_validate_negative() {
-    assert_eq!(Integer::validate("-1"), Ok(-1));
-    assert_eq!(Integer::validate("-42"), Ok(-42));
-    assert_eq!(Integer::validate("-123456789"), Ok(-123_456_789));
+    assert_eq!(Integer::parse("-1"), Ok(-1));
+    assert_eq!(Integer::parse("-42"), Ok(-42));
+    assert_eq!(Integer::parse("-123456789"), Ok(-123_456_789));
 }
 
 #[test]
 fn test_validate_range_boundaries() {
-    assert_eq!(Integer::validate("2147483647"), Ok(i32::MAX));
-    assert_eq!(Integer::validate("+2147483647"), Ok(i32::MAX));
-    assert_eq!(Integer::validate("-2147483648"), Ok(i32::MIN));
+    assert_eq!(Integer::parse("2147483647"), Ok(i32::MAX));
+    assert_eq!(Integer::parse("+2147483647"), Ok(i32::MAX));
+    assert_eq!(Integer::parse("-2147483648"), Ok(i32::MIN));
 }
 
 #[test]
 fn test_validate_single_digits() {
     for d in 0..=9u8 {
         let s = d.to_string();
-        assert_eq!(Integer::validate(&s), Ok(d as i32));
+        assert_eq!(Integer::parse(&s), Ok(d as i32));
     }
 }
 
@@ -48,13 +48,13 @@ fn test_validate_single_digits() {
 
 #[test]
 fn test_validate_empty_string() {
-    assert_eq!(Integer::validate(""), Err(IntegerError::Empty));
+    assert_eq!(Integer::parse(""), Err(IntegerError::Empty));
 }
 
 #[test]
 fn test_validate_lone_sign() {
-    assert_eq!(Integer::validate("+"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("-"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("+"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("-"), Err(IntegerError::InvalidFormat));
 }
 
 #[cfg(feature = "serde")]
@@ -62,8 +62,8 @@ fn test_validate_lone_sign() {
 fn test_validate_signed_zero_rejected() {
     // Per the FHIR regex `[0]|[-+]?[1-9][0-9]*`, only a bare "0" matches — a signed zero
     // matches neither alternative and must be rejected.
-    assert_eq!(Integer::validate("+0"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("-0"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("+0"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("-0"), Err(IntegerError::InvalidFormat));
     assert!(Integer::try_from("+0").is_err());
     assert!(Integer::try_from("-0").is_err());
     assert!(serde_json::from_str::<Integer>("42").is_ok()); // sanity: normal path unaffected
@@ -71,15 +71,15 @@ fn test_validate_signed_zero_rejected() {
 
 #[test]
 fn test_validate_float_values_rejected() {
-    assert_eq!(Integer::validate("1.0"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("1.5"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("-1.5"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("0.0"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate(".5"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("5."), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("1e10"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("1.0"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("1.5"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("-1.5"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("0.0"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse(".5"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("5."), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("1e10"), Err(IntegerError::InvalidFormat));
     assert_eq!(
-        Integer::validate("2147483647.0"),
+        Integer::parse("2147483647.0"),
         Err(IntegerError::InvalidFormat)
     );
 }
@@ -88,105 +88,87 @@ fn test_validate_float_values_rejected() {
 fn test_validate_negative_extreme_underflow() {
     // Comfortably beyond i32::MIN.
     assert_eq!(
-        Integer::validate("-999999999999999999999999"),
+        Integer::parse("-999999999999999999999999"),
         Err(IntegerError::OutOfRange)
     );
     // i64::MIN, still out of range for a 32-bit integer.
     assert_eq!(
-        Integer::validate("-9223372036854775808"),
+        Integer::parse("-9223372036854775808"),
         Err(IntegerError::OutOfRange)
     );
     // One below i32::MIN.
-    assert_eq!(
-        Integer::validate("-2147483649"),
-        Err(IntegerError::OutOfRange)
-    );
+    assert_eq!(Integer::parse("-2147483649"), Err(IntegerError::OutOfRange));
 }
 
 #[test]
 fn test_validate_whitespace_around_signed_integers() {
-    assert_eq!(Integer::validate(" +1"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("+1 "), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate(" -1"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("-1 "), Err(IntegerError::InvalidFormat));
-    assert_eq!(
-        Integer::validate("\t+1\t"),
-        Err(IntegerError::InvalidFormat)
-    );
-    assert_eq!(
-        Integer::validate("\n-1\n"),
-        Err(IntegerError::InvalidFormat)
-    );
-    assert_eq!(Integer::validate("+ 1"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("- 1"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse(" +1"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("+1 "), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse(" -1"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("-1 "), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("\t+1\t"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("\n-1\n"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("+ 1"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("- 1"), Err(IntegerError::InvalidFormat));
 }
 
 #[test]
 fn test_validate_control_characters() {
-    assert_eq!(Integer::validate("1\0"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("\x001"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("1\0"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("\x001"), Err(IntegerError::InvalidFormat));
     assert_eq!(
-        Integer::validate("+1\u{0008}"),
+        Integer::parse("+1\u{0008}"),
         Err(IntegerError::InvalidFormat)
     );
     assert_eq!(
-        Integer::validate("-\u{001B}1"),
+        Integer::parse("-\u{001B}1"),
         Err(IntegerError::InvalidFormat)
     );
 }
 
 #[test]
 fn test_validate_mixed_double_signs() {
-    assert_eq!(Integer::validate("++1"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("--1"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("+-1"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("-+1"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("+-+1"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("-+-1"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("++1"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("--1"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("+-1"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("-+1"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("+-+1"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("-+-1"), Err(IntegerError::InvalidFormat));
 }
 
 #[test]
 fn test_validate_leading_zero() {
-    assert_eq!(Integer::validate("01"), Err(IntegerError::LeadingZero));
-    assert_eq!(Integer::validate("007"), Err(IntegerError::LeadingZero));
-    assert_eq!(Integer::validate("+01"), Err(IntegerError::LeadingZero));
-    assert_eq!(Integer::validate("-01"), Err(IntegerError::LeadingZero));
-    assert_eq!(Integer::validate("00"), Err(IntegerError::LeadingZero));
+    assert_eq!(Integer::parse("01"), Err(IntegerError::LeadingZero));
+    assert_eq!(Integer::parse("007"), Err(IntegerError::LeadingZero));
+    assert_eq!(Integer::parse("+01"), Err(IntegerError::LeadingZero));
+    assert_eq!(Integer::parse("-01"), Err(IntegerError::LeadingZero));
+    assert_eq!(Integer::parse("00"), Err(IntegerError::LeadingZero));
 }
 
 #[test]
 fn test_validate_non_digit_characters() {
-    assert_eq!(Integer::validate("abc"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("12a"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("a12"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("1.0"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("1e5"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("abc"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("12a"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("a12"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("1.0"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("1e5"), Err(IntegerError::InvalidFormat));
 }
 
 #[test]
 fn test_validate_internal_whitespace() {
-    assert_eq!(Integer::validate("1 2"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate(" 12"), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate("12 "), Err(IntegerError::InvalidFormat));
-    assert_eq!(Integer::validate(" "), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("1 2"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse(" 12"), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse("12 "), Err(IntegerError::InvalidFormat));
+    assert_eq!(Integer::parse(" "), Err(IntegerError::InvalidFormat));
 }
 
 #[test]
 fn test_validate_out_of_range() {
+    assert_eq!(Integer::parse("2147483648"), Err(IntegerError::OutOfRange));
+    assert_eq!(Integer::parse("+2147483648"), Err(IntegerError::OutOfRange));
+    assert_eq!(Integer::parse("-2147483649"), Err(IntegerError::OutOfRange));
     assert_eq!(
-        Integer::validate("2147483648"),
-        Err(IntegerError::OutOfRange)
-    );
-    assert_eq!(
-        Integer::validate("+2147483648"),
-        Err(IntegerError::OutOfRange)
-    );
-    assert_eq!(
-        Integer::validate("-2147483649"),
-        Err(IntegerError::OutOfRange)
-    );
-    assert_eq!(
-        Integer::validate("99999999999999999999"),
+        Integer::parse("99999999999999999999"),
         Err(IntegerError::OutOfRange)
     );
 }
@@ -194,10 +176,7 @@ fn test_validate_out_of_range() {
 #[test]
 fn test_validate_unicode_digits_rejected() {
     // Full-width Unicode digit (U+FF11 "１") is not an ASCII digit.
-    assert_eq!(
-        Integer::validate("\u{FF11}"),
-        Err(IntegerError::InvalidFormat)
-    );
+    assert_eq!(Integer::parse("\u{FF11}"), Err(IntegerError::InvalidFormat));
 }
 
 // ---------------------------------------------------------------------
@@ -447,4 +426,16 @@ fn test_serde_deserialization_non_integer_number() {
 fn test_serde_deserialization_malformed_json() {
     assert!(serde_json::from_str::<Integer>("").is_err());
     assert!(serde_json::from_str::<Integer>("abc").is_err());
+}
+
+#[test]
+fn test_validate_returns_unit_on_success() {
+    assert_eq!(Integer::validate("42"), Ok(()));
+    assert_eq!(Integer::validate("-7"), Ok(()));
+}
+
+#[test]
+fn test_validate_returns_same_error_as_parse() {
+    assert_eq!(Integer::validate(""), Err(IntegerError::Empty));
+    assert_eq!(Integer::validate("007"), Err(IntegerError::LeadingZero));
 }

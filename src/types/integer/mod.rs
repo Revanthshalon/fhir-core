@@ -130,6 +130,26 @@ impl Integer {
 
     /// Validates whether a given string is compliant with the FHIR `integer` format.
     ///
+    /// # Errors
+    /// Returns [`IntegerError`] describing the exact failure reason if the string does
+    /// not match the FHIR `integer` regex (`[0]|[-+]?[1-9][0-9]*`) or falls outside the
+    /// 32-bit signed integer range. Use [`Integer::parse`] to also obtain the parsed
+    /// value, or [`TryFrom<&str>`] to obtain a validated `Integer` directly.
+    ///
+    /// # Examples
+    /// ```
+    /// use fhir_core::types::Integer;
+    ///
+    /// assert!(Integer::validate("0").is_ok());
+    /// assert!(Integer::validate("007").is_err());
+    /// ```
+    pub fn validate(value: &str) -> Result<(), IntegerError> {
+        Self::parse(value).map(|_| ())
+    }
+
+    /// Parses a string into the `i32` value it represents, per the FHIR `integer`
+    /// format.
+    ///
     /// # Returns
     /// - `Ok(i32)` with the parsed value if the string matches the FHIR `integer` regex
     ///   (`[0]|[-+]?[1-9][0-9]*`) and fits within the 32-bit signed integer range.
@@ -139,11 +159,11 @@ impl Integer {
     /// ```
     /// use fhir_core::types::Integer;
     ///
-    /// assert_eq!(Integer::validate("0"), Ok(0));
-    /// assert_eq!(Integer::validate("-42"), Ok(-42));
-    /// assert!(Integer::validate("007").is_err());
+    /// assert_eq!(Integer::parse("0"), Ok(0));
+    /// assert_eq!(Integer::parse("-42"), Ok(-42));
+    /// assert!(Integer::parse("007").is_err());
     /// ```
-    pub fn validate(value: &str) -> Result<i32, IntegerError> {
+    pub fn parse(value: &str) -> Result<i32, IntegerError> {
         if value.is_empty() {
             return Err(IntegerError::Empty);
         }
@@ -206,7 +226,7 @@ impl TryFrom<&str> for Integer {
     /// Returns [`TypeError::InvalidValue`] if the input string is empty, malformed, contains a
     /// disallowed leading zero, or falls outside the 32-bit signed integer range.
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Self::validate(value)
+        Self::parse(value)
             .map(Self)
             .map_err(|e| TypeError::InvalidValue {
                 r#type: "integer".to_owned(),

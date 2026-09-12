@@ -4,28 +4,25 @@ use super::*;
 
 #[test]
 fn test_valid_values() {
-    assert_eq!(PositiveInt::validate("1"), Ok(1));
-    assert_eq!(PositiveInt::validate("42"), Ok(42));
-    assert_eq!(PositiveInt::validate("2147483647"), Ok(2_147_483_647));
+    assert_eq!(PositiveInt::parse("1"), Ok(1));
+    assert_eq!(PositiveInt::parse("42"), Ok(42));
+    assert_eq!(PositiveInt::parse("2147483647"), Ok(2_147_483_647));
 }
 
 #[test]
 fn test_empty() {
-    assert_eq!(PositiveInt::validate(""), Err(PositiveIntError::Empty));
+    assert_eq!(PositiveInt::parse(""), Err(PositiveIntError::Empty));
 }
 
 #[test]
 fn test_zero_rejected() {
-    assert_eq!(
-        PositiveInt::validate("0"),
-        Err(PositiveIntError::NotPositive)
-    );
+    assert_eq!(PositiveInt::parse("0"), Err(PositiveIntError::NotPositive));
 }
 
 #[test]
 fn test_negative_rejected() {
     assert_eq!(
-        PositiveInt::validate("-1"),
+        PositiveInt::parse("-1"),
         Err(PositiveIntError::InvalidFormat)
     );
 }
@@ -33,19 +30,16 @@ fn test_negative_rejected() {
 #[test]
 fn test_leading_plus_rejected() {
     assert_eq!(
-        PositiveInt::validate("+1"),
+        PositiveInt::parse("+1"),
         Err(PositiveIntError::InvalidFormat)
     );
 }
 
 #[test]
 fn test_leading_zero() {
+    assert_eq!(PositiveInt::parse("01"), Err(PositiveIntError::LeadingZero));
     assert_eq!(
-        PositiveInt::validate("01"),
-        Err(PositiveIntError::LeadingZero)
-    );
-    assert_eq!(
-        PositiveInt::validate("007"),
+        PositiveInt::parse("007"),
         Err(PositiveIntError::LeadingZero)
     );
 }
@@ -53,11 +47,11 @@ fn test_leading_zero() {
 #[test]
 fn test_out_of_range() {
     assert_eq!(
-        PositiveInt::validate("2147483648"),
+        PositiveInt::parse("2147483648"),
         Err(PositiveIntError::OutOfRange)
     );
     assert_eq!(
-        PositiveInt::validate("99999999999999999999"),
+        PositiveInt::parse("99999999999999999999"),
         Err(PositiveIntError::OutOfRange)
     );
 }
@@ -65,11 +59,11 @@ fn test_out_of_range() {
 #[test]
 fn test_non_digit_characters() {
     assert_eq!(
-        PositiveInt::validate("12a"),
+        PositiveInt::parse("12a"),
         Err(PositiveIntError::InvalidFormat)
     );
     assert_eq!(
-        PositiveInt::validate("1.5"),
+        PositiveInt::parse("1.5"),
         Err(PositiveIntError::InvalidFormat)
     );
 }
@@ -253,5 +247,18 @@ fn test_positive_int_error_display_formatting() {
     assert_eq!(
         PositiveIntError::OutOfRange.to_string(),
         "value exceeds the maximum of 2147483647"
+    );
+}
+
+#[test]
+fn test_validate_returns_unit_on_success() {
+    assert_eq!(PositiveInt::validate("42"), Ok(()));
+}
+
+#[test]
+fn test_validate_returns_same_error_as_parse() {
+    assert_eq!(
+        PositiveInt::validate("0"),
+        Err(PositiveIntError::NotPositive)
     );
 }

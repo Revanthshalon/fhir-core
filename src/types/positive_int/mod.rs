@@ -124,6 +124,26 @@ impl PositiveInt {
 
     /// Validates whether a given string is compliant with the FHIR `positiveInt` format.
     ///
+    /// # Errors
+    /// Returns [`PositiveIntError`] describing the exact failure reason if the string
+    /// does not match the FHIR `positiveInt` regex (`[1-9][0-9]*`) or falls outside
+    /// `1..=2,147,483,647`. Use [`PositiveInt::parse`] to also obtain the parsed
+    /// value, or [`TryFrom<&str>`] to obtain a validated `PositiveInt` directly.
+    ///
+    /// # Examples
+    /// ```
+    /// use fhir_core::types::PositiveInt;
+    ///
+    /// assert!(PositiveInt::validate("42").is_ok());
+    /// assert!(PositiveInt::validate("0").is_err());
+    /// ```
+    pub fn validate(value: &str) -> Result<(), PositiveIntError> {
+        Self::parse(value).map(|_| ())
+    }
+
+    /// Parses a string into the `u32` value it represents, per the FHIR
+    /// `positiveInt` format.
+    ///
     /// # Returns
     /// - `Ok(u32)` with the parsed value if the string matches the FHIR `positiveInt`
     ///   regex (`[1-9][0-9]*`) and falls within `1..=2,147,483,647`.
@@ -133,11 +153,11 @@ impl PositiveInt {
     /// ```
     /// use fhir_core::types::PositiveInt;
     ///
-    /// assert_eq!(PositiveInt::validate("42"), Ok(42));
-    /// assert!(PositiveInt::validate("0").is_err());
-    /// assert!(PositiveInt::validate("007").is_err());
+    /// assert_eq!(PositiveInt::parse("42"), Ok(42));
+    /// assert!(PositiveInt::parse("0").is_err());
+    /// assert!(PositiveInt::parse("007").is_err());
     /// ```
-    pub fn validate(value: &str) -> Result<u32, PositiveIntError> {
+    pub fn parse(value: &str) -> Result<u32, PositiveIntError> {
         if value.is_empty() {
             return Err(PositiveIntError::Empty);
         }
@@ -203,7 +223,7 @@ impl TryFrom<&str> for PositiveInt {
     type Error = TypeError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Self::validate(value)
+        Self::parse(value)
             .map(Self)
             .map_err(|e| TypeError::InvalidValue {
                 r#type: "positiveInt".to_owned(),

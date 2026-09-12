@@ -4,25 +4,25 @@ use super::*;
 
 #[test]
 fn test_valid_values() {
-    assert_eq!(UnsignedInt::validate("0"), Ok(0));
-    assert_eq!(UnsignedInt::validate("1"), Ok(1));
-    assert_eq!(UnsignedInt::validate("42"), Ok(42));
-    assert_eq!(UnsignedInt::validate("2147483647"), Ok(2_147_483_647));
+    assert_eq!(UnsignedInt::parse("0"), Ok(0));
+    assert_eq!(UnsignedInt::parse("1"), Ok(1));
+    assert_eq!(UnsignedInt::parse("42"), Ok(42));
+    assert_eq!(UnsignedInt::parse("2147483647"), Ok(2_147_483_647));
 }
 
 #[test]
 fn test_empty() {
-    assert_eq!(UnsignedInt::validate(""), Err(UnsignedIntError::Empty));
+    assert_eq!(UnsignedInt::parse(""), Err(UnsignedIntError::Empty));
 }
 
 #[test]
 fn test_negative_rejected() {
     assert_eq!(
-        UnsignedInt::validate("-1"),
+        UnsignedInt::parse("-1"),
         Err(UnsignedIntError::InvalidFormat)
     );
     assert_eq!(
-        UnsignedInt::validate("-0"),
+        UnsignedInt::parse("-0"),
         Err(UnsignedIntError::InvalidFormat)
     );
 }
@@ -30,23 +30,20 @@ fn test_negative_rejected() {
 #[test]
 fn test_leading_plus_rejected() {
     assert_eq!(
-        UnsignedInt::validate("+0"),
+        UnsignedInt::parse("+0"),
         Err(UnsignedIntError::InvalidFormat)
     );
     assert_eq!(
-        UnsignedInt::validate("+1"),
+        UnsignedInt::parse("+1"),
         Err(UnsignedIntError::InvalidFormat)
     );
 }
 
 #[test]
 fn test_leading_zero() {
+    assert_eq!(UnsignedInt::parse("01"), Err(UnsignedIntError::LeadingZero));
     assert_eq!(
-        UnsignedInt::validate("01"),
-        Err(UnsignedIntError::LeadingZero)
-    );
-    assert_eq!(
-        UnsignedInt::validate("007"),
+        UnsignedInt::parse("007"),
         Err(UnsignedIntError::LeadingZero)
     );
 }
@@ -54,11 +51,11 @@ fn test_leading_zero() {
 #[test]
 fn test_out_of_range() {
     assert_eq!(
-        UnsignedInt::validate("2147483648"),
+        UnsignedInt::parse("2147483648"),
         Err(UnsignedIntError::OutOfRange)
     );
     assert_eq!(
-        UnsignedInt::validate("99999999999999999999"),
+        UnsignedInt::parse("99999999999999999999"),
         Err(UnsignedIntError::OutOfRange)
     );
 }
@@ -66,11 +63,11 @@ fn test_out_of_range() {
 #[test]
 fn test_non_digit_characters() {
     assert_eq!(
-        UnsignedInt::validate("12a"),
+        UnsignedInt::parse("12a"),
         Err(UnsignedIntError::InvalidFormat)
     );
     assert_eq!(
-        UnsignedInt::validate("1.5"),
+        UnsignedInt::parse("1.5"),
         Err(UnsignedIntError::InvalidFormat)
     );
 }
@@ -224,4 +221,14 @@ fn test_serde_roundtrip() {
 fn test_unsigned_int_error_display_formatting() {
     let err = UnsignedIntError::OutOfRange;
     assert_eq!(err.to_string(), "value exceeds the maximum of 2147483647");
+}
+
+#[test]
+fn test_validate_returns_unit_on_success() {
+    assert_eq!(UnsignedInt::validate("0"), Ok(()));
+}
+
+#[test]
+fn test_validate_returns_same_error_as_parse() {
+    assert_eq!(UnsignedInt::validate(""), Err(UnsignedIntError::Empty));
 }
