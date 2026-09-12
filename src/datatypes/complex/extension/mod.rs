@@ -13,11 +13,11 @@
 //!   never gets a `_id` companion — the spec special-cases `Element.id` this way.
 //!
 //! # Scope
-//! [`ExtensionValue`] currently covers the 20 FHIR primitives plus
-//! [`Period`] — the only types this crate has
-//! implemented so far, not the full 54 the spec allows. A complex-type variant embeds
-//! the type directly (e.g. `valuePeriod` is one JSON object, not a bare/`_`-prefixed
-//! companion pair — only primitives get that split) and is added the moment that
+//! [`ExtensionValue`] currently covers the 20 FHIR primitives plus [`Period`] and
+//! [`Coding`] — the only types this crate has implemented so far, not the full 54 the
+//! spec allows. A complex-type variant embeds the type directly (e.g. `valuePeriod`/
+//! `valueCoding` are each one JSON object, not a bare/`_`-prefixed companion pair —
+//! only primitives get that split) and is added the moment that
 //! complex type is built, not before; `Extension` is the natural second consumer for
 //! each one. See `docs/LLD.md` §4 for the rationale against building this speculatively
 //! ahead of real consumers.
@@ -33,6 +33,7 @@ use serde::ser::SerializeMap;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+use crate::datatypes::complex::coding::Coding;
 use crate::datatypes::complex::period::Period;
 use crate::datatypes::primitive::Primitive;
 #[cfg(feature = "serde")]
@@ -64,6 +65,9 @@ pub enum ExtensionValue {
     Canonical(Primitive<Canonical>),
     /// `valueCode`
     Code(Primitive<Code>),
+    /// `valueCoding` — embedded directly as one JSON object, not a bare/`_`-prefixed
+    /// companion pair (only primitives get that split).
+    Coding(Coding),
     /// `valueDate`
     Date(Primitive<Date>),
     /// `valueDateTime`
@@ -141,6 +145,9 @@ impl Serialize for Extension {
             }
             Some(ExtensionValue::Code(p)) => {
                 serialize_primitive_entry(&mut map, "valueCode", "_valueCode", p)?;
+            }
+            Some(ExtensionValue::Coding(c)) => {
+                map.serialize_entry("valueCoding", c)?;
             }
             Some(ExtensionValue::Date(p)) => {
                 serialize_primitive_entry(&mut map, "valueDate", "_valueDate", p)?;
@@ -255,6 +262,7 @@ impl<'de> Deserialize<'de> for Extension {
                 let mut boolean: ValueSlot<Boolean> = ValueSlot::default();
                 let mut canonical: ValueSlot<Canonical> = ValueSlot::default();
                 let mut code: ValueSlot<Code> = ValueSlot::default();
+                let mut coding: Option<Coding> = None;
                 let mut date: ValueSlot<Date> = ValueSlot::default();
                 let mut date_time: ValueSlot<DateTime> = ValueSlot::default();
                 let mut decimal: ValueSlot<Decimal> = ValueSlot::default();
@@ -288,6 +296,7 @@ impl<'de> Deserialize<'de> for Extension {
                         "_valueCanonical" => canonical.companion = Some(map.next_value()?),
                         "valueCode" => code.value = Some(map.next_value()?),
                         "_valueCode" => code.companion = Some(map.next_value()?),
+                        "valueCoding" => coding = Some(map.next_value()?),
                         "valueDate" => date.value = Some(map.next_value()?),
                         "_valueDate" => date.companion = Some(map.next_value()?),
                         "valueDateTime" => date_time.value = Some(map.next_value()?),
@@ -339,6 +348,7 @@ impl<'de> Deserialize<'de> for Extension {
                     boolean.is_present(),
                     canonical.is_present(),
                     code.is_present(),
+                    coding.is_some(),
                     date.is_present(),
                     date_time.is_present(),
                     decimal.is_present(),
@@ -387,6 +397,8 @@ impl<'de> Deserialize<'de> for Extension {
                         code.value,
                         code.companion,
                     )?))
+                } else if let Some(coding) = coding {
+                    Some(ExtensionValue::Coding(coding))
                 } else if date.is_present() {
                     Some(ExtensionValue::Date(merge_primitive_entry(
                         date.value,

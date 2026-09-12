@@ -44,11 +44,11 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
 - **`Base`/`Element`/`Resource` trait hierarchy**: intentionally undesigned —
   see `docs/LLD.md` §4 for why (a prior speculative attempt didn't compile and
   leaked an invariant). Design bottom-up when a real consumer needs it.
-- **Remaining complex types** (`Coding`, `CodeableConcept`, `Identifier`,
-  `Quantity`, `Reference`): `Extension` and `Period` are real; the rest are
-  doc-only stubs at `src/datatypes/complex/{coding,codeable_concept,
-  identifier,quantity,reference}/mod.rs` — private modules (not part of the
-  public API yet, `#![allow(dead_code)]`'d since nothing constructs them),
+- **Remaining complex types** (`CodeableConcept`, `Identifier`, `Quantity`,
+  `Reference`): `Extension`, `Period`, and `Coding` are real; the rest are
+  doc-only stubs at `src/datatypes/complex/{codeable_concept,identifier,
+  quantity,reference}/mod.rs` — private modules (not part of the public API
+  yet, `#![allow(dead_code)]`'d since nothing constructs them),
   each with a struct matching its field list below and a module doc citing
   the spec. See `docs/LLD.md` §4.1 for why they aren't *implemented* yet —
   construction, invariant validation, accessors, and serde are still
@@ -76,11 +76,20 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
      "no named invariant" — wrong, `per-1` exists at
      hl7.org/fhir/R5/datatypes-definitions.html#Period.end; the earlier check
      only looked at datatypes.html, which doesn't list invariants inline.
-  2. **`Coding`** — `system: Option<Primitive<Uri>>`,
+  2. ~~**`Coding`**~~ — **done.** `system: Option<Primitive<Uri>>`,
      `version: Option<Primitive<FhirString>>`, `code: Option<Primitive<Code>>`,
      `display: Option<Primitive<FhirString>>`,
-     `userSelected: Option<Primitive<Boolean>>`. No named invariants. No
-     dependencies.
+     `userSelected: Option<Primitive<Boolean>>`, plus `id`/`extension`. Named
+     invariant `cod-1` exists (`code.exists().not() implies
+     display.exists().not()`) but is **Warning**-severity (SHOULD), not
+     error-severity (SHALL) like `ext-1`/`ele-1`/`per-1` — this crate's
+     `ConstraintError` models hard SHALL failures, so `cod-1` is deliberately
+     not enforced; a `display`-without-`code` `Coding` is spec-legal, just
+     discouraged. Only `ele-1` is validated. Wired into `Extension` as
+     `ExtensionValue::Coding` (embeds the whole object under `valueCoding`, no
+     companion split). **Correction**: an earlier version of this entry said
+     "No named invariants" — wrong, same mistake as the `Period` one above
+     (checked datatypes.html only, missed datatypes-definitions.html).
   3. **`Quantity`** — `value: Option<Primitive<Decimal>>`,
      `comparator: Option<Primitive<Code>>`, `unit: Option<Primitive<FhirString>>`,
      `system: Option<Primitive<Uri>>`, `code: Option<Primitive<Code>>`. No named
