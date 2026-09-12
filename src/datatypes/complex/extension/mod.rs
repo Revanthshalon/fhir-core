@@ -14,11 +14,12 @@
 //!
 //! # Scope
 //! [`ExtensionValue`] currently covers the 20 FHIR primitives plus [`Period`],
-//! [`Coding`], [`Quantity`], and [`CodeableConcept`] — the only types this crate has
-//! implemented so far, not the full 54 the spec allows. A complex-type variant embeds
-//! the type directly (e.g. `valuePeriod`/`valueCoding`/`valueQuantity`/
-//! `valueCodeableConcept` are each one JSON object, not a bare/`_`-prefixed companion
-//! pair — only primitives get that split) and is added the moment that
+//! [`Coding`], [`Quantity`], [`CodeableConcept`], [`Identifier`], and [`Reference`] —
+//! the only types this crate has implemented so far, not the full 54 the spec allows. A
+//! complex-type variant embeds the type directly (e.g. `valuePeriod`/`valueCoding`/
+//! `valueQuantity`/`valueCodeableConcept`/`valueIdentifier`/`valueReference` are each
+//! one JSON object, not a bare/`_`-prefixed companion pair — only primitives get that
+//! split) and is added the moment that
 //! complex type is built, not before; `Extension` is the natural second consumer for
 //! each one. See `docs/LLD.md` §4 for the rationale against building this speculatively
 //! ahead of real consumers.
@@ -36,8 +37,10 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::datatypes::complex::codeable_concept::CodeableConcept;
 use crate::datatypes::complex::coding::Coding;
+use crate::datatypes::complex::identifier::Identifier;
 use crate::datatypes::complex::period::Period;
 use crate::datatypes::complex::quantity::Quantity;
+use crate::datatypes::complex::reference::Reference;
 use crate::datatypes::primitive::Primitive;
 #[cfg(feature = "serde")]
 use crate::datatypes::primitive::{
@@ -82,6 +85,9 @@ pub enum ExtensionValue {
     Decimal(Primitive<Decimal>),
     /// `valueId`
     Id(Primitive<Id>),
+    /// `valueIdentifier` — embedded directly as one JSON object, not a bare/`_`-prefixed
+    /// companion pair (only primitives get that split).
+    Identifier(Identifier),
     /// `valueInstant`
     Instant(Primitive<Instant>),
     /// `valueInteger`
@@ -101,6 +107,9 @@ pub enum ExtensionValue {
     /// `valueQuantity` — embedded directly as one JSON object, not a bare/`_`-prefixed
     /// companion pair (only primitives get that split).
     Quantity(Quantity),
+    /// `valueReference` — embedded directly as one JSON object, not a bare/`_`-prefixed
+    /// companion pair (only primitives get that split).
+    Reference(Reference),
     /// `valueString`
     String(Primitive<FhirString>),
     /// `valueTime`
@@ -173,6 +182,9 @@ impl Serialize for Extension {
             Some(ExtensionValue::Id(p)) => {
                 serialize_primitive_entry(&mut map, "valueId", "_valueId", p)?;
             }
+            Some(ExtensionValue::Identifier(i)) => {
+                map.serialize_entry("valueIdentifier", i)?;
+            }
             Some(ExtensionValue::Instant(p)) => {
                 serialize_primitive_entry(&mut map, "valueInstant", "_valueInstant", p)?;
             }
@@ -197,6 +209,9 @@ impl Serialize for Extension {
             }
             Some(ExtensionValue::Quantity(q)) => {
                 map.serialize_entry("valueQuantity", q)?;
+            }
+            Some(ExtensionValue::Reference(r)) => {
+                map.serialize_entry("valueReference", r)?;
             }
             Some(ExtensionValue::String(p)) => {
                 serialize_primitive_entry(&mut map, "valueString", "_valueString", p)?;
@@ -283,6 +298,7 @@ impl<'de> Deserialize<'de> for Extension {
                 let mut date_time: ValueSlot<DateTime> = ValueSlot::default();
                 let mut decimal: ValueSlot<Decimal> = ValueSlot::default();
                 let mut id_value: ValueSlot<Id> = ValueSlot::default();
+                let mut identifier: Option<Identifier> = None;
                 let mut instant: ValueSlot<Instant> = ValueSlot::default();
                 let mut integer: ValueSlot<Integer> = ValueSlot::default();
                 #[cfg(feature = "r5")]
@@ -292,6 +308,7 @@ impl<'de> Deserialize<'de> for Extension {
                 let mut period: Option<Period> = None;
                 let mut positive_int: ValueSlot<PositiveInt> = ValueSlot::default();
                 let mut quantity: Option<Quantity> = None;
+                let mut reference: Option<Reference> = None;
                 let mut string: ValueSlot<FhirString> = ValueSlot::default();
                 let mut time: ValueSlot<Time> = ValueSlot::default();
                 let mut unsigned_int: ValueSlot<UnsignedInt> = ValueSlot::default();
@@ -323,6 +340,7 @@ impl<'de> Deserialize<'de> for Extension {
                         "_valueDecimal" => decimal.companion = Some(map.next_value()?),
                         "valueId" => id_value.value = Some(map.next_value()?),
                         "_valueId" => id_value.companion = Some(map.next_value()?),
+                        "valueIdentifier" => identifier = Some(map.next_value()?),
                         "valueInstant" => instant.value = Some(map.next_value()?),
                         "_valueInstant" => instant.companion = Some(map.next_value()?),
                         "valueInteger" => integer.value = Some(map.next_value()?),
@@ -339,6 +357,7 @@ impl<'de> Deserialize<'de> for Extension {
                         "valuePositiveInt" => positive_int.value = Some(map.next_value()?),
                         "_valuePositiveInt" => positive_int.companion = Some(map.next_value()?),
                         "valueQuantity" => quantity = Some(map.next_value()?),
+                        "valueReference" => reference = Some(map.next_value()?),
                         "valueString" => string.value = Some(map.next_value()?),
                         "_valueString" => string.companion = Some(map.next_value()?),
                         "valueTime" => time.value = Some(map.next_value()?),
@@ -373,6 +392,7 @@ impl<'de> Deserialize<'de> for Extension {
                     date_time.is_present(),
                     decimal.is_present(),
                     id_value.is_present(),
+                    identifier.is_some(),
                     instant.is_present(),
                     integer.is_present(),
                     #[cfg(feature = "r5")]
@@ -382,6 +402,7 @@ impl<'de> Deserialize<'de> for Extension {
                     period.is_some(),
                     positive_int.is_present(),
                     quantity.is_some(),
+                    reference.is_some(),
                     string.is_present(),
                     time.is_present(),
                     unsigned_int.is_present(),
@@ -442,6 +463,8 @@ impl<'de> Deserialize<'de> for Extension {
                         id_value.value,
                         id_value.companion,
                     )?))
+                } else if let Some(identifier) = identifier {
+                    Some(ExtensionValue::Identifier(identifier))
                 } else if instant.is_present() {
                     Some(ExtensionValue::Instant(merge_primitive_entry(
                         instant.value,
@@ -471,6 +494,8 @@ impl<'de> Deserialize<'de> for Extension {
                     )?))
                 } else if let Some(quantity) = quantity {
                     Some(ExtensionValue::Quantity(quantity))
+                } else if let Some(reference) = reference {
+                    Some(ExtensionValue::Reference(reference))
                 } else if string.is_present() {
                     Some(ExtensionValue::String(merge_primitive_entry(
                         string.value,

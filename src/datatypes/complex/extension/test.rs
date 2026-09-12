@@ -237,6 +237,19 @@ fn all_extension_values() -> Vec<ExtensionValue> {
         )),
         ExtensionValue::Decimal(Primitive::from_value(Decimal::try_from("1.5").unwrap())),
         ExtensionValue::Id(Primitive::from_value(Id::new("abc-123").unwrap())),
+        ExtensionValue::Identifier(
+            crate::datatypes::complex::Identifier::new(
+                None,
+                None,
+                None,
+                Some(Primitive::from_value(FhirString::new("12345").unwrap())),
+                None,
+                None,
+                None,
+                Vec::new(),
+            )
+            .unwrap(),
+        ),
         ExtensionValue::Instant(Primitive::from_value(
             Instant::new("2020-01-01T00:00:00Z").unwrap(),
         )),
@@ -261,6 +274,19 @@ fn all_extension_values() -> Vec<ExtensionValue> {
             crate::datatypes::complex::Quantity::new(
                 Some(Primitive::from_value(Decimal::try_from("5.4").unwrap())),
                 None,
+                None,
+                None,
+                None,
+                None,
+                Vec::new(),
+            )
+            .unwrap(),
+        ),
+        ExtensionValue::Reference(
+            crate::datatypes::complex::Reference::new(
+                Some(Primitive::from_value(
+                    FhirString::new("Patient/123").unwrap(),
+                )),
                 None,
                 None,
                 None,

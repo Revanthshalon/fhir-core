@@ -44,22 +44,17 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
 - **`Base`/`Element`/`Resource` trait hierarchy**: intentionally undesigned —
   see `docs/LLD.md` §4 for why (a prior speculative attempt didn't compile and
   leaked an invariant). Design bottom-up when a real consumer needs it.
-- **Remaining complex types** (`Identifier`, `Reference`): `Extension`,
-  `Period`, `Coding`, `Quantity`, and `CodeableConcept` are real; the rest are
-  doc-only stubs at `src/datatypes/complex/{identifier,reference}/mod.rs` —
-  private modules (not part of the public API yet,
-  `#![allow(dead_code)]`'d since nothing constructs them),
-  each with a struct matching its field list below and a module doc citing
-  the spec. See `docs/LLD.md` §4.1 for why they aren't *implemented* yet —
-  construction, invariant validation, accessors, and serde are still
-  deliberately missing. When one *is* picked up: re-verify its module doc
-  against the live spec first (this crate's rule, not optional), then
-  implement following `Period`'s shape (`src/datatypes/complex/period/mod.rs`)
-  as the reference example, then flip its `mod` to `pub mod` and re-export it
-  from `src/datatypes/complex/mod.rs`. Dependency order (fields verified
-  against hl7.org/fhir/R5/datatypes.html and hl7.org/fhir/R5/references.html
-  on 2026-09-12; each still needs its own module-doc-cited re-verification per
-  this crate's spec-driven-not-memory-driven rule when actually implemented):
+- ~~**Remaining complex types**~~ — **done, this section is now historical.**
+  All seven originally-scoped complex types (`Extension`, `Period`, `Coding`,
+  `Quantity`, `CodeableConcept`, `Identifier`, `Reference`) are implemented,
+  each with a validating constructor, accessors, and hand-rolled serde, and
+  each wired into `Extension` as an `ExtensionValue` variant. The other ~28
+  complex types the spec defines (`Attachment`, `Address`, `ContactPoint`,
+  `Money`, ...) are not stubbed or built — new ones get designed only when a
+  real consumer needs them (`docs/LLD.md` §4), not speculatively ahead of
+  time. Kept below for the field/invariant research trail (dependency order,
+  fields verified against hl7.org/fhir/R5/datatypes.html and
+  hl7.org/fhir/R5/references.html on 2026-09-12):
 
   1. ~~**`Period`**~~ — **done.** `start: Option<Primitive<DateTime>>`,
      `end: Option<Primitive<DateTime>>`, plus the `id`/`extension` every
@@ -108,34 +103,38 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
      to `Coding` and is already handled there. Only `ele-1` is validated.
      Wired into `Extension` as `ExtensionValue::CodeableConcept` (embeds the
      whole object under `valueCodeableConcept`, no companion split).
-  5. **`Identifier`** and **`Reference`** — mutually dependent
-     (`Identifier.assigner: Option<Box<Reference>>`,
+  5. ~~**`Identifier`** and **`Reference`**~~ — **done, built together** since
+     they're mutually recursive (`Identifier.assigner: Option<Box<Reference>>`,
      `Reference.identifier: Option<Box<Identifier>>`; `Box` needed since each
-     embeds the other by value once — otherwise an infinite-size type), so
-     design together as one step, after `CodeableConcept` and `Period`:
+     embeds the other by value once — otherwise an infinite-size type):
      - `Identifier`: `use: Option<Primitive<Code>>`,
        `type: Option<CodeableConcept>`, `system: Option<Primitive<Uri>>`,
        `value: Option<Primitive<FhirString>>`, `period: Option<Period>`,
-       `assigner: Option<Box<Reference>>`. No named invariants.
+       `assigner: Option<Box<Reference>>`, plus `id`/`extension`. Named
+       invariant `ident-1` (`value.exists()`) exists but is
+       **Warning**-severity — not enforced, same reasoning as `Coding`'s
+       `cod-1`. Only `ele-1` is validated.
      - `Reference`: `reference: Option<Primitive<FhirString>>`,
        `type: Option<Primitive<Uri>>`, `identifier: Option<Box<Identifier>>`,
-       `display: Option<Primitive<FhirString>>`. Two named invariants:
-       - `ref-2` (implementable now): `reference.exists() or identifier.exists()
-         or display.exists() or extension.exists()` — at least one of the four
-         must be present. Enforce in a validating constructor, same shape as
-         `Extension::validate_ext1`.
-       - `ref-1` (**not implementable at this crate's scope**): requires
-         `%rootResource`/`%resource` — validating a local (`#id`) reference
-         against sibling `contained` resources needs whole-resource-tree
-         context this crate doesn't have (no `Resource`/`contained` model
-         yet, see the `Base`/`Element`/`Resource` roadmap item above).
-         Document as a known gap on `Reference`, don't fake it with a stub
-         check.
-  Every step also needs: `Extension`'s `Serialize`/`Deserialize` gains a
-  variant on `ExtensionValue` the moment each type above lands (`Extension` is
-  the "natural second consumer" per `docs/LLD.md` §4.1), and the `Extension`
-  unrecognized-`value[x]` gap (last bullet below) shrinks by one type each time.
+       `display: Option<Primitive<FhirString>>`, plus `id`/`extension`. Two
+       named invariants, both confirmed **error**-severity:
+       - `ref-2` — implemented in `Reference::new`: `reference.exists() or
+         identifier.exists() or display.exists() or extension.exists()`.
+         Note `type` is *not* in the list — stronger than a generic `ele-1`,
+         so `ref-2` alone is validated (no separate `ele-1` check needed).
+       - `ref-1` — **not implementable at this crate's scope**: requires
+         `%rootResource`/`%resource` to validate a local (`#id`) reference
+         against sibling `contained` resources, which needs whole-resource-tree
+         context this crate doesn't model (no `Resource`/`contained` support
+         yet — see the `Base`/`Element`/`Resource` roadmap item above).
+         Documented as a known gap in the module doc; a `"#id"` reference is
+         accepted without verifying it resolves.
+     Both wired into `Extension` as `ExtensionValue::Identifier`/`::Reference`
+     (each embeds the whole object, no companion split).
 - **`Extension` drops unrecognized `value[x]`** on deserialize (lossy
-  round-trip for the 34 complex types this crate doesn't model yet). Spec-legal
-  (SHOULD, not MUST) but a real gap — see `docs/LLD.md` §4.1 "Known gap".
-  Revisit once the first complex type lands.
+  round-trip for the ~28 complex types this crate still doesn't model, now
+  that `Period`/`Coding`/`Quantity`/`CodeableConcept`/`Identifier`/`Reference`
+  are handled). Spec-legal (SHOULD, not MUST) but a real gap — see
+  `docs/LLD.md` §4.1 "Known gap". Revisit if/when the next complex type lands,
+  or when a caller actually needs lossless round-tripping of an unmodeled
+  `value[x]`.
