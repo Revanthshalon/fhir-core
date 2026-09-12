@@ -37,9 +37,11 @@ use crate::datatypes::primitive::{
     PrimitiveCompanion, merge_primitive_entry, serialize_primitive_entry,
 };
 use crate::errors::{FhirCoreResult, constraints::ConstraintError};
+#[cfg(feature = "r5")]
+use crate::types::Integer64;
 use crate::types::{
     Base64Binary, Boolean, Canonical, Code, Date, DateTime, Decimal, FhirString, Id, Instant,
-    Integer, Integer64, Markdown, Oid, PositiveInt, Time, UnsignedInt, Uri, Url, Uuid,
+    Integer, Markdown, Oid, PositiveInt, Time, UnsignedInt, Uri, Url, Uuid,
 };
 
 #[cfg(test)]
@@ -72,6 +74,7 @@ pub enum ExtensionValue {
     /// `valueInteger`
     Integer(Primitive<Integer>),
     /// `valueInteger64`
+    #[cfg(feature = "r5")]
     Integer64(Primitive<Integer64>),
     /// `valueMarkdown`
     Markdown(Primitive<Markdown>),
@@ -151,6 +154,7 @@ impl Serialize for Extension {
             Some(ExtensionValue::Integer(p)) => {
                 serialize_primitive_entry(&mut map, "valueInteger", "_valueInteger", p)?;
             }
+            #[cfg(feature = "r5")]
             Some(ExtensionValue::Integer64(p)) => {
                 serialize_primitive_entry(&mut map, "valueInteger64", "_valueInteger64", p)?;
             }
@@ -248,6 +252,7 @@ impl<'de> Deserialize<'de> for Extension {
                 let mut id_value: ValueSlot<Id> = ValueSlot::default();
                 let mut instant: ValueSlot<Instant> = ValueSlot::default();
                 let mut integer: ValueSlot<Integer> = ValueSlot::default();
+                #[cfg(feature = "r5")]
                 let mut integer64: ValueSlot<Integer64> = ValueSlot::default();
                 let mut markdown: ValueSlot<Markdown> = ValueSlot::default();
                 let mut oid: ValueSlot<Oid> = ValueSlot::default();
@@ -285,7 +290,9 @@ impl<'de> Deserialize<'de> for Extension {
                         "_valueInstant" => instant.companion = Some(map.next_value()?),
                         "valueInteger" => integer.value = Some(map.next_value()?),
                         "_valueInteger" => integer.companion = Some(map.next_value()?),
+                        #[cfg(feature = "r5")]
                         "valueInteger64" => integer64.value = Some(map.next_value()?),
+                        #[cfg(feature = "r5")]
                         "_valueInteger64" => integer64.companion = Some(map.next_value()?),
                         "valueMarkdown" => markdown.value = Some(map.next_value()?),
                         "_valueMarkdown" => markdown.companion = Some(map.next_value()?),
@@ -327,6 +334,7 @@ impl<'de> Deserialize<'de> for Extension {
                     id_value.is_present(),
                     instant.is_present(),
                     integer.is_present(),
+                    #[cfg(feature = "r5")]
                     integer64.is_present(),
                     markdown.is_present(),
                     oid.is_present(),
@@ -397,11 +405,6 @@ impl<'de> Deserialize<'de> for Extension {
                         integer.value,
                         integer.companion,
                     )?))
-                } else if integer64.is_present() {
-                    Some(ExtensionValue::Integer64(merge_primitive_entry(
-                        integer64.value,
-                        integer64.companion,
-                    )?))
                 } else if markdown.is_present() {
                     Some(ExtensionValue::Markdown(merge_primitive_entry(
                         markdown.value,
@@ -449,6 +452,15 @@ impl<'de> Deserialize<'de> for Extension {
                     )?))
                 } else {
                     None
+                };
+                #[cfg(feature = "r5")]
+                let value = if integer64.is_present() {
+                    Some(ExtensionValue::Integer64(merge_primitive_entry(
+                        integer64.value,
+                        integer64.companion,
+                    )?))
+                } else {
+                    value
                 };
 
                 Extension::new(url, id, extension, value).map_err(DeError::custom)

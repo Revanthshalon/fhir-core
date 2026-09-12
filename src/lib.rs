@@ -4,7 +4,7 @@
 
 #![forbid(unsafe_code)]
 
-#[cfg(feature = "r5")]
+#[cfg(any(feature = "r4", feature = "r5"))]
 pub mod datatypes;
 pub mod errors;
 

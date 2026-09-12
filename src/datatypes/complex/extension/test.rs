@@ -220,6 +220,7 @@ fn all_extension_values() -> Vec<ExtensionValue> {
             Instant::new("2020-01-01T00:00:00Z").unwrap(),
         )),
         ExtensionValue::Integer(Primitive::from_value(Integer::new(42))),
+        #[cfg(feature = "r5")]
         ExtensionValue::Integer64(Primitive::from_value(Integer64::new(42))),
         ExtensionValue::Markdown(Primitive::from_value(Markdown::new("**bold**").unwrap())),
         ExtensionValue::Oid(Primitive::from_value(Oid::new("urn:oid:1.2.3").unwrap())),
