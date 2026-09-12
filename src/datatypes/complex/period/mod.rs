@@ -94,6 +94,33 @@ impl Serialize for Period {
     }
 }
 
+/// Per-type bare-value/companion accumulator pair used while scanning the JSON map. See
+/// `Extension`'s `ValueSlot` for the fuller explanation this mirrors.
+#[cfg(feature = "serde")]
+struct Slot<T> {
+    value: Option<T>,
+    companion: Option<PrimitiveCompanion>,
+}
+
+// Manual impl: `#[derive(Default)]` would require `T: Default`, which `DateTime`
+// doesn't implement (and shouldn't need to).
+#[cfg(feature = "serde")]
+impl<T> Default for Slot<T> {
+    fn default() -> Self {
+        Self {
+            value: None,
+            companion: None,
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T> Slot<T> {
+    fn is_present(&self) -> bool {
+        self.value.is_some() || self.companion.is_some()
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for Period {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -115,25 +142,6 @@ impl<'de> Deserialize<'de> for Period {
             {
                 let mut id = None;
                 let mut extension = Vec::new();
-                struct Slot<T> {
-                    value: Option<T>,
-                    companion: Option<PrimitiveCompanion>,
-                }
-                // Manual impl: `#[derive(Default)]` would require `T: Default`, which
-                // `DateTime` doesn't implement (and shouldn't need to).
-                impl<T> Default for Slot<T> {
-                    fn default() -> Self {
-                        Self {
-                            value: None,
-                            companion: None,
-                        }
-                    }
-                }
-                impl<T> Slot<T> {
-                    fn is_present(&self) -> bool {
-                        self.value.is_some() || self.companion.is_some()
-                    }
-                }
                 let mut start: Slot<DateTime> = Slot::default();
                 let mut end: Slot<DateTime> = Slot::default();
 

@@ -89,6 +89,7 @@ fn test_new_with_extension_only_succeeds() {
     assert!(ext.value().is_some());
     let coding = Coding::new(None, None, None, None, None, None, vec![ext]);
     assert!(coding.is_ok());
+    assert_eq!(coding.unwrap().extensions().len(), 1);
 }
 
 #[test]
@@ -143,6 +144,35 @@ fn test_serde_roundtrip_all_fields() {
     let json = serde_json::to_string(&coding).unwrap();
     let back: Coding = serde_json::from_str(&json).unwrap();
     assert_eq!(coding, back);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_roundtrip_with_id_and_extension() {
+    let ext = Extension::new(
+        uri("http://example.org/fhir/x"),
+        None,
+        Vec::new(),
+        Some(crate::datatypes::complex::ExtensionValue::Boolean(
+            Primitive::from_value(Boolean::new(true)),
+        )),
+    )
+    .unwrap();
+    let coding = Coding::new(
+        None,
+        None,
+        Some(code("active")),
+        None,
+        None,
+        Some(FhirString::new("c1").unwrap()),
+        vec![ext],
+    )
+    .unwrap();
+    let json = serde_json::to_string(&coding).unwrap();
+    let back: Coding = serde_json::from_str(&json).unwrap();
+    assert_eq!(coding, back);
+    assert_eq!(back.id().unwrap().as_str(), "c1");
+    assert_eq!(back.extensions().len(), 1);
 }
 
 #[cfg(feature = "serde")]

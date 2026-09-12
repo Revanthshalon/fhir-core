@@ -210,6 +210,18 @@ fn all_extension_values() -> Vec<ExtensionValue> {
             Canonical::new("http://example.org").unwrap(),
         )),
         ExtensionValue::Code(Primitive::from_value(Code::new("active").unwrap())),
+        ExtensionValue::Coding(
+            Coding::new(
+                None,
+                None,
+                Some(Primitive::from_value(Code::new("active").unwrap())),
+                None,
+                None,
+                None,
+                Vec::new(),
+            )
+            .unwrap(),
+        ),
         ExtensionValue::Date(Primitive::from_value(Date::new("2020-01-01").unwrap())),
         ExtensionValue::DateTime(Primitive::from_value(
             DateTime::new("2020-01-01T00:00:00Z").unwrap(),
@@ -224,6 +236,17 @@ fn all_extension_values() -> Vec<ExtensionValue> {
         ExtensionValue::Integer64(Primitive::from_value(Integer64::new(42))),
         ExtensionValue::Markdown(Primitive::from_value(Markdown::new("**bold**").unwrap())),
         ExtensionValue::Oid(Primitive::from_value(Oid::new("urn:oid:1.2.3").unwrap())),
+        ExtensionValue::Period(
+            Period::new(
+                Some(Primitive::from_value(
+                    DateTime::new("2020-01-01T00:00:00Z").unwrap(),
+                )),
+                None,
+                None,
+                Vec::new(),
+            )
+            .unwrap(),
+        ),
         ExtensionValue::PositiveInt(Primitive::from_value(PositiveInt::new(1).unwrap())),
         ExtensionValue::String(Primitive::from_value(FhirString::new("hello").unwrap())),
         ExtensionValue::Time(Primitive::from_value(Time::new("12:00:00").unwrap())),

@@ -79,6 +79,24 @@ fn test_id_accessor() {
     assert_eq!(period.id().unwrap().as_str(), "p1");
 }
 
+#[test]
+fn test_extensions_accessor() {
+    use crate::datatypes::complex::ExtensionValue;
+    use crate::types::{Boolean, Uri};
+
+    let ext = Extension::new(
+        Primitive::from_value(Uri::new("http://example.org/fhir/x").unwrap()),
+        None,
+        Vec::new(),
+        Some(ExtensionValue::Boolean(Primitive::from_value(
+            Boolean::new(true),
+        ))),
+    )
+    .unwrap();
+    let period = Period::new(None, None, None, vec![ext]).unwrap();
+    assert_eq!(period.extensions().len(), 1);
+}
+
 #[cfg(feature = "serde")]
 #[test]
 fn test_serde_roundtrip_start_and_end() {
@@ -115,4 +133,34 @@ fn test_serde_deserialize_unknown_field_ignored() {
     let period: Period =
         serde_json::from_str(r#"{"start": "2024-01-01T00:00:00Z", "unknown": 1}"#).unwrap();
     assert_eq!(period.start(), Some(&dt("2024-01-01T00:00:00Z")));
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_deserialize_non_object_fails() {
+    let result: Result<Period, _> = serde_json::from_str(r#""just a string""#);
+    assert!(result.is_err());
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_roundtrip_with_id_and_extension() {
+    use crate::datatypes::complex::ExtensionValue;
+    use crate::types::{Boolean, Uri};
+
+    let ext = Extension::new(
+        Primitive::from_value(Uri::new("http://example.org/fhir/x").unwrap()),
+        None,
+        Vec::new(),
+        Some(ExtensionValue::Boolean(Primitive::from_value(
+            Boolean::new(true),
+        ))),
+    )
+    .unwrap();
+    let period = Period::new(None, None, Some(FhirString::new("p1").unwrap()), vec![ext]).unwrap();
+    let json = serde_json::to_string(&period).unwrap();
+    let back: Period = serde_json::from_str(&json).unwrap();
+    assert_eq!(period, back);
+    assert_eq!(back.id().unwrap().as_str(), "p1");
+    assert_eq!(back.extensions().len(), 1);
 }
