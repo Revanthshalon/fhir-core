@@ -41,21 +41,32 @@ clients, ETL, FHIRPath), but does not itself model resources yet.
 ## 3. Subsystem Architecture
 
 Three subsystems so far:
-- **Primitives Engine** (`src/types/`) — 20 normative FHIR R5 primitive types, each a
-  standalone struct with construction-time validation.
+- **Primitives Engine** (`src/types/`) — 20 of the 21 normative FHIR R5 primitive types
+  (`xhtml` not yet implemented), each a standalone struct with construction-time
+  validation. An `r4` feature flag exists in `Cargo.toml`, but only `base64Binary`'s
+  R4-vs-R5 grammar difference has actually been audited so far — see `docs/BACKLOG.md`.
 - **Element Wrapper** (`src/datatypes/primitive/`) — `Primitive<T>`, the
   `{value, id, extension}` shape every primitive-valued property structurally is, plus
   the `_propertyName` companion serde split/merge helpers hand-rolled containers use.
-- **Complex Types** (`src/datatypes/complex/`) — currently just `Extension`, a plain
-  struct (no traits) enforcing the `ext-1` multi-field invariant, with `url` and
-  `value[x]` wrapped in `Primitive<T>`.
+- **Complex Types** (`src/datatypes/complex/`) — seven fully implemented: `Extension`,
+  `Period`, `Coding`, `Quantity`, `CodeableConcept`, `Identifier`, `Reference`. Each is
+  a plain struct (no traits) with a validating constructor for its error-severity
+  invariants, `id`/`extension` fields, accessors, and hand-rolled serde; each is wired
+  into `Extension` as an `ExtensionValue` variant. `Identifier` and `Reference` are
+  mutually recursive (each embeds the other, boxed). A further 34 types (general-purpose,
+  metadata, and special-purpose) exist as doc-only stubs — real fields, spec-cited
+  module docs, but no construction/validation/serde/wiring — see `docs/BACKLOG.md`
+  Roadmap for the full list and build order.
 
 `src/errors/` provides the shared error types both return (`TypeError` for single-field
-grammar, `ConstraintError` for multi-field invariants like `ext-1`/`ele-1`).
+grammar, `ConstraintError` for multi-field invariants like `ext-1`/`ele-1`). Each
+primitive's granular error enum (`DateError`, `Base64Error`, etc.) is also re-exported
+from `src/types/` so external callers can name and match on it, not just the crate-wide
+`TypeError` its `TryFrom` impls map into.
 
-Everything past that (Element/Resource trait hierarchy, the remaining complex types,
-choice-type enum growth) is deferred — see LLD.md §4 for why and how it gets designed
-when actually needed.
+Everything past the seven implemented complex types (`Base`/`Element`/`Resource` trait
+hierarchy, the remaining 34 complex types, choice-type enum growth) is deferred — see
+LLD.md §4 for why and how it gets designed when actually needed.
 
 ---
 
@@ -112,8 +123,15 @@ single-pass $O(N)$ scanner with a fixed length cap, so there is no backtracking 
 
 ## 7. Versioning
 
-Feature flag `r5` (default) gates all primitives. No `r4`/`r4b` support exists or is
-planned until there's a concrete reason to add it.
+Feature flags `r4` and `r5` gate primitives/complex types (`r5` default). Both are
+Cargo-additive: a dependency graph that pulls in both is a real possibility, not a
+theoretical one, and `#[cfg(feature = "r5")]` cannot itself distinguish "R5 requested
+instead of R4" from "R5 requested alongside R4" — see `docs/BACKLOG.md`
+(`base64Binary` entry) and `REVIEW_ISSUES.md` ISSUE-009 for the versioning-strategy
+decision this still needs. Only `base64Binary`'s R4 grammar and `Attachment.size`'s
+R4 type (`unsignedInt`, vs R5's `integer64`) have been confirmed to differ across
+versions; the rest of the primitive/type set is unaudited for R4 fidelity. `r4` is a
+real near-term target, not a placeholder, but is not yet usable as one.
 
 ---
 

@@ -8,11 +8,14 @@
 
 ## 1. Scope
 
-Current scope is the 20 FHIR R5 primitive types as standalone Rust structs — no trait
-hierarchy, no `Element`/`Resource` model, no complex types. Those are deferred until a
-concrete consumer needs them (§4); building them ahead of a consumer produced a
-speculative, self-contradicting design in a previous draft of this document and is not
-repeated here.
+Current scope: 20 of the 21 FHIR R5 primitive types (`xhtml` not yet implemented) as
+standalone Rust structs, plus seven fully implemented complex types (`Extension`,
+`Period`, `Coding`, `Quantity`, `CodeableConcept`, `Identifier`, `Reference` — see §4)
+and 34 further complex/metadata/special-purpose types as doc-only stubs (real fields,
+no construction/validation/serde). No `Base`/`Element`/`Resource` trait hierarchy yet.
+Anything past the seven implemented complex types is deferred until a concrete consumer
+needs it (§4); building the full hierarchy ahead of a consumer produced a speculative,
+self-contradicting design in a previous draft of this document and is not repeated here.
 
 ### Core Design Principles
 
@@ -39,7 +42,13 @@ Every primitive in `src/types/<type_name>/` follows the same shape (see
   be captured natively (e.g. `Decimal` preserving trailing-zero precision).
 - `new(val)` — infallible when all native values are valid; otherwise fallible.
 - `new_unchecked(val)` — skips validation.
-- `validate(&str) -> Result<(), TypeError>` performing the FHIR-spec grammar check.
+- `validate(&str) -> Result<(), XError>` performing the FHIR-spec grammar check, where
+  `XError` is that primitive's own granular error enum (`DateError`, `Base64Error`,
+  ...) — re-exported from `src/types/` so external callers can name and match on it.
+  `TryFrom`/`FromStr` map that into the crate-wide `TypeError` (§5). Four primitives
+  (`Integer`, `Integer64`, `PositiveInt`, `UnsignedInt`) also expose `parse(&str) ->
+  Result<NativeType, XError>` for callers who want the parsed value directly, since
+  `validate` itself is `Result<(), XError>` for signature symmetry across all 19.
 - `TryFrom<&str>`, `TryFrom<String>`, `FromStr`, `Display`, `From`/`Into` conversions.
 - No `Deref`/`DerefMut` — explicit accessors only (`as_str()`, `as_bool()`, `as_f64()`,
   `into_inner()`, ...).
@@ -52,7 +61,7 @@ Every primitive in `src/types/<type_name>/` follows the same shape (see
 
 | Primitive | Rust Type | Representation | HL7 R5 Pattern / Invariant | Serde JSON Encoding | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `base64Binary` | `Base64Binary` | `String` | RFC 4648 Base64: `(\s*([0-9a-zA-Z+/=]){4}\s*)+` | JSON string | Complete |
+| `base64Binary` | `Base64Binary` | `String` | RFC 4648 Base64, R5 grammar: `(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?` — no whitespace, empty allowed. (R4's grammar differs — permits internal whitespace, `(\s*([0-9a-zA-Z+/=]){4}\s*)+` — and is not yet implemented; see `docs/BACKLOG.md`.) | JSON string | Complete (R5 only) |
 | `boolean` | `Boolean` | `bool` | `true \| false` | JSON boolean | Complete |
 | `decimal` | `Decimal` | `String` | `-?(0\|[1-9][0-9]{0,17})(\.[0-9]{1,17})?([eE][+-]?[0-9]{1,9})?` | JSON number | Complete |
 | `id` | `Id` | `String` | `[A-Za-z0-9\-\.]{1,64}` | JSON string | Complete |
@@ -79,12 +88,22 @@ spec page.
 
 ---
 
-## 4. Deferred: Element Model & Remaining Complex Types
+## 4. Complex Types & the Element Model
 
-`Extension` (`src/datatypes/complex/extension/`) and `Primitive<T>`
-(`src/datatypes/primitive/`) are built — see §4.1 and §4.2. Still not designed, on
-purpose: `Base`/`Element`/`Resource` trait hierarchy and the remaining complex types
-(`Coding`, `CodeableConcept`, `Identifier`, `Period`, `Quantity`, `Reference`).
+`Primitive<T>` (`src/datatypes/primitive/`, §4.2) and seven complex types are built:
+`Extension` (§4.1), `Period`, `Coding`, `Quantity`, `CodeableConcept`, `Identifier`,
+`Reference` (`src/datatypes/complex/{period,coding,quantity,codeable_concept,
+identifier,reference}/`). Each follows the same shape as `Extension` (§4.1): private
+fields, `id`/`extension`, a validating constructor for its confirmed error-severity
+invariants (only `ele-1` for most; `qty-3` for `Quantity`; `ref-2` for `Reference`),
+accessors, and hand-rolled `Serialize`/`Deserialize` mirroring `Extension`'s
+bare-value/companion split for primitive fields (complex-typed fields embed directly,
+no companion). `Identifier` and `Reference` are mutually recursive (each embeds the
+other via `Box`) and were designed together for that reason.
+
+Still not designed, on purpose: the `Base`/`Element`/`Resource` trait hierarchy, and
+real implementations of the 34 further complex/metadata/special-purpose types beyond
+the seven above (doc-only stubs exist for all of them — see `docs/BACKLOG.md` Roadmap).
 
 These get designed bottom-up when a real consumer needs them, pulling in only the
 trait(s)/wrapper that consumer actually requires — not a hierarchy up front. Building
@@ -94,16 +113,25 @@ its own `ele-1` invariant be bypassed by direct construction — the private-fie
 validating-constructor shape both `Extension` and the real `Primitive<T>` use now is a
 direct reaction to that.
 
+Several invariants confirmed to exist were initially missed because the check only
+looked at hl7.org/fhir/R5/datatypes.html, which doesn't list invariants inline — the
+full text lives on hl7.org/fhir/R5/datatypes-definitions.html (or
+metadatatypes-definitions.html / elementdefinition-definitions.html for those
+categories). `Period`'s `per-1`, `Coding`'s `cod-1`, and `Quantity`'s `qty-3` were all
+caught this way; treat "no named invariants found" on any stub as unverified until the
+definitions page has actually been checked, not the summary page.
+
 ### 4.1 `Extension`
 
 No traits: nothing consumes `Extension` polymorphically yet, so it's a plain struct with
 private fields, a validating constructor (`Extension::new`, checks `ext-1`), and
 `new_unchecked` as the explicit bypass — the same shape every primitive already uses.
 
-`ExtensionValue` (`value[x]`) covers only the 20 primitives this crate has implemented,
-not the full 54 types the real spec allows (20 primitives + 35 complex types). A
-complex-type variant is added the moment that complex type is built, not before —
-`Extension` becomes the natural second consumer for each one as the crate grows.
+`ExtensionValue` (`value[x]`) covers the 20 implemented primitives plus `Period`,
+`Coding`, `Quantity`, `CodeableConcept`, `Identifier`, and `Reference` — not the full 54
+types the real spec allows. A complex-type variant is added the moment that complex
+type is built, not before — `Extension` becomes the natural second consumer for each
+one as the crate grows (all six built so far have gained a variant this way).
 
 `Extension.url` and every `ExtensionValue` variant wrap
 [`Primitive<T>`](#42-primitivet), not the bare primitive type, since both are
@@ -113,8 +141,9 @@ ordinary property, never itself companion-wrapped.
 
 #### Known gap: unrecognized `value[x]` is dropped on deserialize
 
-Any `value*`/`_value*` JSON key this crate doesn't yet model (one of the 34 remaining
-complex types, or a future primitive) is currently discarded via `IgnoredAny` in
+Any `value*`/`_value*` JSON key this crate doesn't yet model (one of the ~28 complex
+types still uncovered, or the unimplemented `xhtml` primitive) is currently discarded
+via `IgnoredAny` in
 `Extension`'s `Deserialize` impl — deserializing then re-serializing such an `Extension`
 loses that value. Verified against spec (hl7.org/fhir/R5/extensibility.html §2.1.5.0.3):
 retention is a **SHOULD** ("systems SHOULD retain unknown extensions when they are
@@ -147,7 +176,12 @@ single JSON value in general (it can be 0, 1, or 2 sibling keys: bare `propertyN
 `_propertyName` companion, or both, depending on state). The split/merge logic lives in
 two `pub(crate)` helpers next to the type (`serialize_primitive_entry`,
 `merge_primitive_entry`), used by every hand-rolled container `Serialize`/`Deserialize`
-impl — currently just `Extension`'s (21 call sites: `url` + 20 `value[x]` variants).
+impl — all seven complex types now (`Extension`'s own 21 call sites: `url` + 20
+primitive `value[x]` variants, plus one call site per primitive-typed field on
+`Period`/`Coding`/`Quantity`/`CodeableConcept`/`Identifier`/`Reference`). The six
+complex-typed `ExtensionValue` variants (`Period`, `Coding`, ...) skip these helpers
+entirely — they embed as a single JSON object with no companion split, since only
+primitives get that treatment.
 
 ---
 
@@ -164,11 +198,20 @@ FhirCoreError
 ```
 
 `ConstraintError` was added alongside `Extension`, the first complex type needing a
-multi-field invariant (`ext-1`). Remaining invariants (`ele-1`, `per-1`, ...) get their
-own `InvariantViolated { key, .. }` call sites as the types that need them are built —
-no new error variant required, `key` already carries the invariant identity. Any
+multi-field invariant (`ext-1`). Confirmed-implemented invariants across the seven
+complex types each got their own `InvariantViolated { key, .. }` call site as that type
+was built (`ele-1`, `ext-1`, `qty-3`, `ref-2`) — no new error variant required, `key`
+already carries the invariant identity. Warning-severity invariants (`cod-1`,
+`ident-1`) and not-implementable-here ones (`per-1`, `ref-1`) deliberately have no
+`ConstraintError` call site at all — see each type's module doc for why. Any
 serialization-specific error variant is still scoped to whichever future need requires
 it — not before.
+
+Each primitive also has its own granular error enum (`DateError`, `Base64Error`, ...),
+returned by that primitive's `validate`/`parse` and mapped into `TypeError::InvalidValue`
+by `TryFrom`. These are re-exported from `src/types/` (not just left `pub` inside their
+private `mod`) so external callers can name and pattern-match on the specific error, not
+only the crate-wide `TypeError`.
 
 ---
 
@@ -211,12 +254,22 @@ fhir-core/
     │   ├── uri/               {mod.rs, test.rs}   Complete
     │   ├── url/               {mod.rs, test.rs}   Complete
     │   ├── uuid/              {mod.rs, test.rs}   Complete
-    │   └── (all 20 FHIR R5 primitives complete)
+    │   └── (20 of 21 FHIR R5 primitives complete; `xhtml` not yet implemented)
     ├── datatypes/             <-- FHIR reusable data types
     │   ├── mod.rs
     │   ├── primitive/         {mod.rs, test.rs}   Complete (Primitive<T>)
     │   └── complex/
     │       ├── mod.rs
-    │       └── extension/     {mod.rs, test.rs}   Complete
-    └── r5/                    <-- placeholder for future resource models
+    │       ├── extension/            {mod.rs, test.rs}   Complete
+    │       ├── period/               {mod.rs, test.rs}   Complete
+    │       ├── coding/               {mod.rs, test.rs}   Complete
+    │       ├── quantity/             {mod.rs, test.rs}   Complete
+    │       ├── codeable_concept/     {mod.rs, test.rs}   Complete
+    │       ├── identifier/           {mod.rs, test.rs}   Complete
+    │       ├── reference/            {mod.rs, test.rs}   Complete
+    │       └── (34 further complex/metadata/special-purpose types: doc-only stub
+    │            mod.rs, no test.rs — real fields, no construction/validation/serde.
+    │            Private modules, not re-exported. See docs/BACKLOG.md Roadmap.)
+    └── r5/                    <-- wired in lib.rs behind feature = "r5";
+                                    placeholder for future resource models
 ```

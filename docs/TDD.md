@@ -43,7 +43,7 @@ LLD.md §4), not ahead of time.
 
 | Primitive | Status | Happy Path Vectors | Negative / Edge Vectors |
 | :--- | :--- | :--- | :--- |
-| `base64Binary` | Complete | `"TWFu"`, `"AAAA"`, with internal whitespace | Odd lengths, illegal chars (`@`, `!`), invalid padding (`===`) |
+| `base64Binary` | Complete (R5 only) | `"TWFu"`, `"AAAA"`, empty string | Internal whitespace (R5 forbids it — R4 permits it and is not yet implemented), odd lengths, illegal chars (`@`, `!`), invalid padding (`===`) |
 | `boolean` | Complete | `true`, `false`, `"true"`, `"false"` | `"True"`, `"FALSE"`, `"yes"`, `"1"`, `""` |
 | `decimal` | Complete | `"0"`, `"-0"`, `"0.010"`, `"42.5"`, `"1e3"`, `"-1.2E-3"` | `"+42"`, `".5"`, `"5."`, `"0123"`, non-numeric, finite check |
 | `id` | Complete | `"a"`, `"patient-1234"`, `"Observation.1"`, 64-char string | `""`, 65-char string, spaces, `_`, `/`, `@`, unicode |
@@ -68,7 +68,11 @@ LLD.md §4), not ahead of time.
 
 ## 4. Remaining Work Order
 
-All 20 FHIR R5 primitives are complete.
+All 20 implemented FHIR R5 primitives are complete (`xhtml` not yet implemented). Seven
+complex types are complete: `Extension`, `Period`, `Coding`, `Quantity`,
+`CodeableConcept`, `Identifier`, `Reference`. 34 further complex/metadata/
+special-purpose types exist as doc-only stubs with no tests (nothing to test yet — see
+`docs/BACKLOG.md` Roadmap for build order).
 
 ### 4.1 `Primitive<T>` Test Coverage (`src/datatypes/primitive/test.rs`)
 
@@ -85,13 +89,29 @@ All 20 FHIR R5 primitives are complete.
 - Nested/recursive extensions (grandchild depth).
 - `id`/`url`/`extensions`/`value` accessors — `url()` now returns `&Primitive<Uri>`.
 - `new_unchecked` bypasses `ext-1` (mirrors every primitive's escape hatch).
-- One round-trip per `ExtensionValue` variant (all 20 primitives), each now
-  `Primitive`-wrapped.
+- One round-trip per `ExtensionValue` variant (all 20 primitives plus `Period`,
+  `Coding`, `Quantity`, `CodeableConcept`, `Identifier`, `Reference`), each
+  `Primitive`-wrapped (primitives) or embedded directly (complex types — no companion
+  split for those).
 - Serde: value-only, id+children, value-with-companion, companion-only-no-value
   (data-absent-reason) for both `url` and `value[x]`, `_valueX` merged regardless of
   JSON key order, missing `url` fails, `ext-1` violations fail on deserialize,
   unknown fields ignored, `id`-alone-on-a-companion fails `ele-1` on deserialize.
 
-Next: pick the next real complex-type consumer and design only the trait/wrapper
-surface it needs — see LLD.md §4. Not scheduled further than that until it's the
-current task.
+### 4.3 Complex Type Test Coverage (`Period`, `Coding`, `Quantity`, `CodeableConcept`, `Identifier`, `Reference`)
+
+Each has its own `test.rs` following the same shape: happy path (individual fields, all
+fields together, extension-only), negative/boundary (its error-severity invariant
+violated — `ele-1` for `Period`/`Coding`/`CodeableConcept`/`Identifier`, `qty-3` for
+`Quantity`, `ref-2` for `Reference`, plus `ref-2`'s `type`-alone-insufficient case),
+invalid nested field values, and malformed/non-object JSON — for both direct
+construction and serde. Warning-severity invariants (`cod-1`, `ident-1`) and
+not-implementable-here invariants (`per-1`, `ref-1`) are documented as deliberately
+unenforced, with a test confirming construction still succeeds despite violating them
+(e.g. `test_new_display_without_code_succeeds_cod1_is_warning_only`).
+
+Next: pick the next complex-type stub to implement — all 7 originally-scoped types are
+now done, so this means one of the 34 further stubs (see `docs/BACKLOG.md` Roadmap for
+the list) — and design only the construction/validation/serde surface its confirmed
+error-severity invariants need. Not scheduled further than that until it's the current
+task.
