@@ -248,6 +248,18 @@ fn all_extension_values() -> Vec<ExtensionValue> {
             .unwrap(),
         ),
         ExtensionValue::PositiveInt(Primitive::from_value(PositiveInt::new(1).unwrap())),
+        ExtensionValue::Quantity(
+            crate::datatypes::complex::Quantity::new(
+                Some(Primitive::from_value(Decimal::try_from("5.4").unwrap())),
+                None,
+                None,
+                None,
+                None,
+                None,
+                Vec::new(),
+            )
+            .unwrap(),
+        ),
         ExtensionValue::String(Primitive::from_value(FhirString::new("hello").unwrap())),
         ExtensionValue::Time(Primitive::from_value(Time::new("12:00:00").unwrap())),
         ExtensionValue::UnsignedInt(Primitive::from_value(UnsignedInt::new(0).unwrap())),

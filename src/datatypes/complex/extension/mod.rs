@@ -13,11 +13,12 @@
 //!   never gets a `_id` companion — the spec special-cases `Element.id` this way.
 //!
 //! # Scope
-//! [`ExtensionValue`] currently covers the 20 FHIR primitives plus [`Period`] and
-//! [`Coding`] — the only types this crate has implemented so far, not the full 54 the
-//! spec allows. A complex-type variant embeds the type directly (e.g. `valuePeriod`/
-//! `valueCoding` are each one JSON object, not a bare/`_`-prefixed companion pair —
-//! only primitives get that split) and is added the moment that
+//! [`ExtensionValue`] currently covers the 20 FHIR primitives plus [`Period`],
+//! [`Coding`], and [`Quantity`] — the only types this crate has implemented so far, not
+//! the full 54 the spec allows. A complex-type variant embeds the type directly (e.g.
+//! `valuePeriod`/`valueCoding`/`valueQuantity` are each one JSON object, not a
+//! bare/`_`-prefixed companion pair — only primitives get that split) and is added the
+//! moment that
 //! complex type is built, not before; `Extension` is the natural second consumer for
 //! each one. See `docs/LLD.md` §4 for the rationale against building this speculatively
 //! ahead of real consumers.
@@ -35,6 +36,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::datatypes::complex::coding::Coding;
 use crate::datatypes::complex::period::Period;
+use crate::datatypes::complex::quantity::Quantity;
 use crate::datatypes::primitive::Primitive;
 #[cfg(feature = "serde")]
 use crate::datatypes::primitive::{
@@ -92,6 +94,9 @@ pub enum ExtensionValue {
     Period(Period),
     /// `valuePositiveInt`
     PositiveInt(Primitive<PositiveInt>),
+    /// `valueQuantity` — embedded directly as one JSON object, not a bare/`_`-prefixed
+    /// companion pair (only primitives get that split).
+    Quantity(Quantity),
     /// `valueString`
     String(Primitive<FhirString>),
     /// `valueTime`
@@ -182,6 +187,9 @@ impl Serialize for Extension {
             }
             Some(ExtensionValue::PositiveInt(p)) => {
                 serialize_primitive_entry(&mut map, "valuePositiveInt", "_valuePositiveInt", p)?;
+            }
+            Some(ExtensionValue::Quantity(q)) => {
+                map.serialize_entry("valueQuantity", q)?;
             }
             Some(ExtensionValue::String(p)) => {
                 serialize_primitive_entry(&mut map, "valueString", "_valueString", p)?;
@@ -275,6 +283,7 @@ impl<'de> Deserialize<'de> for Extension {
                 let mut oid: ValueSlot<Oid> = ValueSlot::default();
                 let mut period: Option<Period> = None;
                 let mut positive_int: ValueSlot<PositiveInt> = ValueSlot::default();
+                let mut quantity: Option<Quantity> = None;
                 let mut string: ValueSlot<FhirString> = ValueSlot::default();
                 let mut time: ValueSlot<Time> = ValueSlot::default();
                 let mut unsigned_int: ValueSlot<UnsignedInt> = ValueSlot::default();
@@ -320,6 +329,7 @@ impl<'de> Deserialize<'de> for Extension {
                         "valuePeriod" => period = Some(map.next_value()?),
                         "valuePositiveInt" => positive_int.value = Some(map.next_value()?),
                         "_valuePositiveInt" => positive_int.companion = Some(map.next_value()?),
+                        "valueQuantity" => quantity = Some(map.next_value()?),
                         "valueString" => string.value = Some(map.next_value()?),
                         "_valueString" => string.companion = Some(map.next_value()?),
                         "valueTime" => time.value = Some(map.next_value()?),
@@ -361,6 +371,7 @@ impl<'de> Deserialize<'de> for Extension {
                     oid.is_present(),
                     period.is_some(),
                     positive_int.is_present(),
+                    quantity.is_some(),
                     string.is_present(),
                     time.is_present(),
                     unsigned_int.is_present(),
@@ -446,6 +457,8 @@ impl<'de> Deserialize<'de> for Extension {
                         positive_int.value,
                         positive_int.companion,
                     )?))
+                } else if let Some(quantity) = quantity {
+                    Some(ExtensionValue::Quantity(quantity))
                 } else if string.is_present() {
                     Some(ExtensionValue::String(merge_primitive_entry(
                         string.value,

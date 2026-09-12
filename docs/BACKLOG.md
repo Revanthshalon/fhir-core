@@ -44,10 +44,10 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
 - **`Base`/`Element`/`Resource` trait hierarchy**: intentionally undesigned —
   see `docs/LLD.md` §4 for why (a prior speculative attempt didn't compile and
   leaked an invariant). Design bottom-up when a real consumer needs it.
-- **Remaining complex types** (`CodeableConcept`, `Identifier`, `Quantity`,
-  `Reference`): `Extension`, `Period`, and `Coding` are real; the rest are
+- **Remaining complex types** (`CodeableConcept`, `Identifier`, `Reference`):
+  `Extension`, `Period`, `Coding`, and `Quantity` are real; the rest are
   doc-only stubs at `src/datatypes/complex/{codeable_concept,identifier,
-  quantity,reference}/mod.rs` — private modules (not part of the public API
+  reference}/mod.rs` — private modules (not part of the public API
   yet, `#![allow(dead_code)]`'d since nothing constructs them),
   each with a struct matching its field list below and a module doc citing
   the spec. See `docs/LLD.md` §4.1 for why they aren't *implemented* yet —
@@ -90,13 +90,17 @@ resolved — either fixed for real, or promoted into an ADR/issue if it grows.
      companion split). **Correction**: an earlier version of this entry said
      "No named invariants" — wrong, same mistake as the `Period` one above
      (checked datatypes.html only, missed datatypes-definitions.html).
-  3. **`Quantity`** — `value: Option<Primitive<Decimal>>`,
+  3. ~~**`Quantity`**~~ — **done.** `value: Option<Primitive<Decimal>>`,
      `comparator: Option<Primitive<Code>>`, `unit: Option<Primitive<FhirString>>`,
-     `system: Option<Primitive<Uri>>`, `code: Option<Primitive<Code>>`. No named
-     invariants found on the datatypes page; re-check
-     hl7.org/fhir/R5/datatypes-definitions.html#Quantity for aut-1/qty-3-style
-     comparator/system+code coupling rules before assuming none exist. No
-     dependencies.
+     `system: Option<Primitive<Uri>>`, `code: Option<Primitive<Code>>`, plus
+     `id`/`extension`. Named invariant `qty-3` (`code.empty() or
+     system.exists()`, **error** severity) exists as predicted — unlike
+     `per-1`/`cod-1`, this one is a plain presence check with no
+     boundary/comparison semantics, so it's fully enforced in
+     `Quantity::new`. Only `ele-1` and `qty-3` are validated (no other
+     invariants found on datatypes-definitions.html). Wired into `Extension`
+     as `ExtensionValue::Quantity` (embeds the whole object under
+     `valueQuantity`, no companion split).
   4. **`CodeableConcept`** — `coding: Vec<Coding>`,
      `text: Option<Primitive<FhirString>>`. No named invariants. Depends on
      `Coding` (step 2).
