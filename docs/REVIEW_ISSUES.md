@@ -44,6 +44,7 @@ decisions or non-trivial architecture work, not because they were dismissed.
 | **ISSUE-008** | **Medium** | Documentation | Architectural Docs (`LLD.md`, `TDD.md`, `TECH_DESIGN.md`) Drift | **Fixed** |
 | **ISSUE-009** | **Medium** | Architecture | Additive Feature Flags Hazard (`r4` vs `r5`) | Open — real, no strategy decided yet |
 | **ISSUE-010** | **Low** | Codebase Hygiene | Dangling Orphan Module `src/r5/mod.rs` | **Fixed** (wired into `lib.rs`) |
+| **ISSUE-011** | **Medium** | Ergonomics / Correctness | `Quantity`'s `comparator` Field Stored but Never Used for Ordering | **Fixed** |
 
 **Note on this table**: several entries below were corrected after independent
 verification found errors in the original audit — see the per-issue notes, especially
@@ -308,6 +309,37 @@ generated.
 - **Resolution (2026-09-13):** Fixed — wired in (option 1), matching
   `docs/TECH_DESIGN.md`'s stated intent for this module to eventually hold R5 resource
   models.
+
+---
+
+### ISSUE-011: `Quantity`'s `comparator` Field Stored but Never Used for Ordering
+
+- **Severity:** Medium (Ergonomics / Correctness)
+- **Component:** `src/datatypes/complex/{quantity,age,count,distance,duration,
+  money_quantity,simple_quantity}/`
+- **Raised:** 2026-09-13, in review after ISSUE-002's implementation (not part of the
+  original audit).
+- **Description:**
+  `Quantity` and its six profiles store `comparator` (`<`, `<=`, `>=`, `>`, `ad`) but
+  had no comparison logic that uses it — `PartialOrd`/`Ord` were simply absent. A
+  comparator turns a quantity's `value` from a single point into an open-ended range
+  (`<5mg` means "the true value is below 5mg", not "the value is 5mg"), so naive
+  numeric comparison of `value` alone would be actively wrong whenever a comparator is
+  present, and two ranges are only *sometimes* orderable (`<10` and `>20` are
+  definitely ordered; `<10` and `>5` overlap on `(5, 10)` and aren't).
+- **Action Items:**
+  1. Implement `PartialOrd` (not `Ord` — this is a genuine partial order: there is no
+     correct total order here, the same reason `f64` has no `Ord`) using
+     comparator-aware, unit-aware interval logic.
+  2. Ensure `Some(Equal)` is returned only when the derived `PartialEq` also agrees,
+     preserving the `a == b` iff `cmp(a, b) == Equal` contract that `BTreeSet`/`sort`/
+     `dedup` rely on — the same law `Decimal`'s own docs (ISSUE-006) are built around.
+- **Resolution (2026-09-13):** Fixed. Added a shared, crate-private interval-algebra
+  helper (`src/datatypes/complex/quantity_magnitude.rs`) used by thin `PartialOrd`
+  impls on all 7 `Quantity`-family types. Returns `None` (never guesses) for: different
+  `system`/`code`, a missing `value`, an `ad` comparator or any comparator code outside
+  `<`/`<=`/`>=`/`>`, or genuinely overlapping ranges. 24 interval-algebra unit tests
+  plus 2 wiring tests per type.
 
 ---
 
