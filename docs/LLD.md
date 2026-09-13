@@ -90,10 +90,12 @@ spec page.
 
 ## 4. Complex Types & the Element Model
 
-`Primitive<T>` (`src/datatypes/primitive/`, §4.2) and seven complex types are built:
+`Primitive<T>` (`src/datatypes/primitive/`, §4.2) and thirteen complex types are built:
 `Extension` (§4.1), `Period`, `Coding`, `Quantity`, `CodeableConcept`, `Identifier`,
-`Reference` (`src/datatypes/complex/{period,coding,quantity,codeable_concept,
-identifier,reference}/`). Each follows the same shape as `Extension` (§4.1): private
+`Reference`, and the six `Quantity` profiles `Age`, `Count`, `Distance`, `Duration`,
+`MoneyQuantity`, `SimpleQuantity` (`src/datatypes/complex/{period,coding,quantity,
+codeable_concept,identifier,reference,age,count,distance,duration,money_quantity,
+simple_quantity}/`). Each follows the same shape as `Extension` (§4.1): private
 fields, `id`/`extension`, a validating constructor for its confirmed error-severity
 invariants (only `ele-1` for most; `qty-3` for `Quantity`; `ref-2` for `Reference`),
 accessors, and hand-rolled `Serialize`/`Deserialize` mirroring `Extension`'s
@@ -176,7 +178,7 @@ single JSON value in general (it can be 0, 1, or 2 sibling keys: bare `propertyN
 `_propertyName` companion, or both, depending on state). The split/merge logic lives in
 two `pub(crate)` helpers next to the type (`serialize_primitive_entry`,
 `merge_primitive_entry`), used by every hand-rolled container `Serialize`/`Deserialize`
-impl — all seven complex types now (`Extension`'s own 21 call sites: `url` + 20
+impl — all thirteen complex types now (`Extension`'s own 21 call sites: `url` + 20
 primitive `value[x]` variants, plus one call site per primitive-typed field on
 `Period`/`Coding`/`Quantity`/`CodeableConcept`/`Identifier`/`Reference`). The six
 complex-typed `ExtensionValue` variants (`Period`, `Coding`, ...) skip these helpers

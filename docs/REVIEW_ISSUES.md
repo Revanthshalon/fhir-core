@@ -20,10 +20,10 @@ Below are the formalized issues logged for team review and triage.
 
 **Update (2026-09-13):** Every issue was independently re-verified against the actual
 code and, where invariants were cited, against hl7.org/fhir/R5 directly, before acting
-on it. ISSUE-001, 004, 005, 008, and 010 are fixed. ISSUE-003 had factual errors in its
-own citations (see its entry) — corrected and partially fixed. ISSUE-006 is real
-behavior but was already a documented, deliberate tradeoff, not an unnoticed bug —
-severity corrected, left open. ISSUE-002, 007, and 009 are left open as genuine design
+on it. ISSUE-001, 002, 003, 004, 005, 008, and 010 are fixed. ISSUE-003 had factual
+errors in its own citations (see its entry) — corrected, then fixed in full. ISSUE-006
+is real behavior but was already a documented, deliberate tradeoff, not an unnoticed
+bug — severity corrected, left open. ISSUE-007 and 009 are left open as genuine design
 decisions or non-trivial architecture work, not because they were dismissed.
 
 ---
@@ -35,8 +35,8 @@ decisions or non-trivial architecture work, not because they were dismissed.
 | Issue ID | Severity | Category | Title | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | **ISSUE-001** | **High** | Stubs | 34 Stubs Omit Inherited `Element` Fields (`id`, `extension`) | **Fixed** |
-| **ISSUE-002** | **Medium** | Stubs / Architecture | Quantity Profiles Duplication vs Newtype Wrapper Pattern | Open (design decision, not a bug — see note) |
-| **ISSUE-003** | **Medium** | Stubs / Spec | Missing Invariant Documentation in Complex Type Stubs | Partially fixed — see note (this issue's own citations had errors) |
+| **ISSUE-002** | **Medium** | Stubs / Architecture | Quantity Profiles Duplication vs Newtype Wrapper Pattern | **Fixed** — implemented as standalone structs, see note |
+| **ISSUE-003** | **Medium** | Stubs / Spec | Missing Invariant Documentation in Complex Type Stubs | **Fixed** — see note (this issue's own citations had errors) |
 | **ISSUE-004** | **High** | Public API | Granular Primitive Error Types Are Unnameable in Public API | **Fixed** |
 | **ISSUE-005** | **Low** | Public API | Inconsistent `validate()` Return Signatures Across Primitives | **Fixed** |
 | **ISSUE-006** | ~~High~~ **Low** (see correction) | Serde / Fidelity | `Decimal` Serialization Loses Precision and Trailing Zeros | Open — deliberate, already documented in `decimal/mod.rs` |
@@ -101,13 +101,18 @@ generated.
      pub struct SimpleQuantity(Quantity);
      ```
   2. Implement profile-specific validating constructors on the newtypes while delegating storage, serialization, and deserialization directly to `Quantity`.
-- **Note (2026-09-13):** Left open deliberately, not fixed reflexively. This is a real
-  design tradeoff — a newtype wrapper avoids the field duplication but also means the 6
-  profile types can't independently evolve field-level docs/derives from `Quantity`,
-  and `docs/LLD.md`/`TECH_DESIGN.md` explicitly caution against building abstractions
-  ahead of a concrete need. Worth deciding *when* one of these 6 stubs is actually
-  picked up for implementation, not now while all 6 are still inert stubs with no
-  consumer.
+- **Resolution (2026-09-13):** Decided and implemented as standalone structs (not
+  newtype wrappers), matching `Extension`/`Identifier`/`Quantity`'s existing
+  positional-constructor convention and letting each profile evolve its own invariant
+  independently without coupling to `Quantity`. All 6 profiles
+  (`Age`, `Count`, `Distance`, `Duration`, `MoneyQuantity`, `SimpleQuantity`) are now
+  fully implemented — constructor validating `ele-1`/`qty-3` plus the confirmed
+  profile-specific invariant, `new_unchecked`, accessors, serde — each verified against
+  its own StructureDefinition JSON on hl7.org/fhir/R5 (not assumed from `Quantity`'s):
+  `age-1`, `cnt-3`, `dis-1`, `drt-1`, `mtqy-1` (all error severity); `SimpleQuantity`'s
+  `sqty-1` is enforced structurally by omitting the `comparator` field entirely rather
+  than as a runtime check. Wired into `src/datatypes/complex/mod.rs` alongside the
+  other 7 implemented types.
 
 ---
 
@@ -137,13 +142,16 @@ generated.
     extension.exists())`.
   - `Range`'s `rng-2` is confirmed accurate as stated (modulo the real expression using
     `lowBoundary()`/`highBoundary()`, not a plain `<=`).
-  - `Timing`'s `tim-1`..`tim-9` and `Attachment`'s `att-1` were not independently
-    re-verified here; treat those two as still-unconfirmed pending a direct fetch, same
-    status as before this correction.
-  - **Fixed in the stub docs** (`range`, `ratio`, `sampled_data`, `attachment`
-    modules) as part of the ISSUE-001 pass — each now cites its confirmed invariant
-    (or confirmed absence of one) with the corrected id/FHIRPath/severity.
-    `Timing`'s stub still says "not yet checked," accurately.
+  - `Timing`'s invariants confirmed via direct fetch of
+    hl7.org/fhir/R5/datatypes-definitions.html#Timing.repeat (2026-09-13): the real set
+    is `tim-1`, `tim-2`, `tim-4` through `tim-10` (**there is no `tim-3`**), all error
+    ("Rule") severity, coupling `duration`/`period`/`durationMax`/`periodMax`/`countMax`/
+    `offset`/`timeOfDay` to their prerequisite fields. `Attachment`'s `att-1` was already
+    confirmed in the stub prior to this pass.
+  - **Fixed in the stub docs** (`range`, `ratio`, `sampled_data`, `attachment`, `timing`
+    modules) — each now cites its confirmed invariant(s) (or confirmed absence of one)
+    with the corrected id/FHIRPath/severity. No stub left with an unverified invariant
+    claim.
 
 ---
 
@@ -307,13 +315,13 @@ generated.
 
 ~~1. **Triage & Priority Alignment:** Review ISSUES 001, 004, and 006 first, as they impact public API stability and serialization correctness.~~
 ~~2. **Docs Synchronization:** Resolve ISSUE-008 by bringing `LLD.md`, `TDD.md`, and `TECH_DESIGN.md` up to date with git HEAD.~~
-~~3. **Stubs Architecture:** Prioritize ISSUE-001 (adding `id`/`extension` to stubs)~~ and ISSUE-002 (Quantity profiles newtype decision) before writing implementations for any of the 34 stubs.
+~~3. **Stubs Architecture:** Prioritize ISSUE-001 (adding `id`/`extension` to stubs) and ISSUE-002 (Quantity profiles newtype decision) before writing implementations for any of the 34 stubs.~~
 
-**Status (2026-09-13):** Steps 1 and 2 done — ISSUE-001, 004, 005, 008, and 010 fixed;
-ISSUE-006's severity corrected (documented tradeoff, not a fresh bug); ISSUE-003's own
-citations corrected and the confirmed invariants folded into the relevant stub docs.
-Remaining open items are genuine design decisions, not oversights: ISSUE-002 (newtype
-vs. duplicated-fields for the six `Quantity` profiles) and ISSUE-007 (builders) should
-be decided when a stub is actually picked up for implementation, not preemptively;
-ISSUE-009 (R4/R5 additive-feature-flags strategy) is real, non-trivial architecture
-work already tracked in `docs/BACKLOG.md`'s `base64Binary` entry.
+**Status (2026-09-13):** Steps 1–3 done — ISSUE-001, 002, 003, 004, 005, 008, and 010
+fixed; ISSUE-006's severity corrected (documented tradeoff, not a fresh bug). ISSUE-002
+was decided in favor of standalone structs over newtype wrappers (see its entry) and
+all six `Quantity` profiles are now implemented. Remaining open items are genuine
+design decisions or non-trivial work, not oversights: ISSUE-007 (builders) should be
+decided when a real caller finds the positional constructors unworkable, not
+preemptively; ISSUE-009 (R4/R5 additive-feature-flags strategy) is real, non-trivial
+architecture work already tracked in `docs/BACKLOG.md`'s `base64Binary` entry.

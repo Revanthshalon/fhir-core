@@ -14,9 +14,18 @@
 //!   `decimal`), `periodMax` (0..1, `decimal`), `periodUnit` (0..1, `code`),
 //!   `dayOfWeek` (0..*, `code`), `timeOfDay` (0..*, `time`), `when` (0..*, `code`),
 //!   `offset` (0..1, `unsignedInt`).
-//! - Named invariants not yet checked (spec historically has `tim-1`/`tim-...`-style
-//!   rules coupling `durationMax`/`frequencyMax`/`periodMax` to their base fields) —
-//!   re-verify before implementing.
+//! - Confirmed invariants on `TimingRepeat` (hl7.org/fhir/R5/datatypes-definitions.html#Timing.repeat),
+//!   all **error** severity ("Rule"), none yet enforced in this stub — note there is no
+//!   `tim-3`:
+//!   - `tim-1`: `duration.empty() or durationUnit.exists()`
+//!   - `tim-2`: `period.empty() or periodUnit.exists()`
+//!   - `tim-4`: `duration.exists() implies duration >= 0`
+//!   - `tim-5`: `period.exists() implies period >= 0`
+//!   - `tim-6`: `periodMax.empty() or period.exists()`
+//!   - `tim-7`: `durationMax.empty() or duration.exists()`
+//!   - `tim-8`: `countMax.empty() or count.exists()`
+//!   - `tim-9`: `offset.empty() or (when.exists() and when.select($this in ('C' | 'CM' | 'CD' | 'CV')).allFalse())`
+//!   - `tim-10`: `timeOfDay.empty() or when.empty()`
 //!
 //! # Status
 //! Stub only — not wired into [`complex`](crate::datatypes::complex) yet. See
