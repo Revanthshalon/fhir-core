@@ -14,6 +14,10 @@ fn uri(s: &str) -> Primitive<Uri> {
     Primitive::from_value(Uri::new(s).unwrap())
 }
 
+fn text(s: &str) -> Primitive<FhirString> {
+    Primitive::from_value(FhirString::new(s).unwrap())
+}
+
 // --- Happy path ---
 
 #[test]
@@ -27,13 +31,19 @@ fn test_new_with_value_only_succeeds() {
 fn test_new_with_all_fields_succeeds() {
     let quantity = SimpleQuantity::new(
         Some(dec("5.4")),
-        None,
+        Some(text("mg")),
         Some(uri("http://unitsofmeasure.org")),
         Some(cd("mg")),
         Some(FhirString::new("q1").unwrap()),
         Vec::new(),
     );
     assert!(quantity.is_ok());
+    let quantity = quantity.unwrap();
+    assert_eq!(quantity.value(), Some(&dec("5.4")));
+    assert_eq!(quantity.unit(), Some(&text("mg")));
+    assert_eq!(quantity.system(), Some(&uri("http://unitsofmeasure.org")));
+    assert_eq!(quantity.code(), Some(&cd("mg")));
+    assert_eq!(quantity.id().unwrap().as_str(), "q1");
 }
 
 #[test]
@@ -49,6 +59,7 @@ fn test_new_with_extension_only_succeeds() {
     .unwrap();
     let quantity = SimpleQuantity::new(None, None, None, None, None, vec![ext]);
     assert!(quantity.is_ok());
+    assert_eq!(quantity.unwrap().extensions().len(), 1);
 }
 
 #[test]
@@ -121,6 +132,39 @@ fn test_partial_ord_different_units_incomparable() {
     assert_eq!(mg.partial_cmp(&kg), None);
 }
 
+#[test]
+fn test_partial_ord_identical_instance_is_equal() {
+    let quantity = SimpleQuantity::new(Some(dec("5")), None, None, None, None, Vec::new()).unwrap();
+    assert_eq!(
+        quantity.partial_cmp(&quantity),
+        Some(std::cmp::Ordering::Equal)
+    );
+}
+
+#[test]
+fn test_partial_ord_equal_magnitude_different_metadata_is_incomparable() {
+    let a = SimpleQuantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        None,
+        Some(FhirString::new("a").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    let b = SimpleQuantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        None,
+        Some(FhirString::new("b").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    assert_ne!(a, b);
+    assert_eq!(a.partial_cmp(&b), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]
@@ -128,7 +172,7 @@ fn test_partial_ord_different_units_incomparable() {
 fn test_serde_roundtrip_all_fields() {
     let quantity = SimpleQuantity::new(
         Some(dec("5.4")),
-        None,
+        Some(text("mg")),
         Some(uri("http://unitsofmeasure.org")),
         Some(cd("mg")),
         None,
@@ -138,6 +182,34 @@ fn test_serde_roundtrip_all_fields() {
     let json = serde_json::to_string(&quantity).unwrap();
     let back: SimpleQuantity = serde_json::from_str(&json).unwrap();
     assert_eq!(quantity, back);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_roundtrip_with_id_and_extension() {
+    let ext = Extension::new(
+        uri("http://example.org/fhir/x"),
+        None,
+        Vec::new(),
+        Some(crate::datatypes::complex::ExtensionValue::Boolean(
+            Primitive::from_value(Boolean::new(true)),
+        )),
+    )
+    .unwrap();
+    let quantity = SimpleQuantity::new(
+        Some(dec("5.4")),
+        None,
+        None,
+        None,
+        Some(FhirString::new("q1").unwrap()),
+        vec![ext],
+    )
+    .unwrap();
+    let json = serde_json::to_string(&quantity).unwrap();
+    let back: SimpleQuantity = serde_json::from_str(&json).unwrap();
+    assert_eq!(quantity, back);
+    assert_eq!(back.id().unwrap().as_str(), "q1");
+    assert_eq!(back.extensions().len(), 1);
 }
 
 #[cfg(feature = "serde")]

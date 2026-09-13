@@ -14,6 +14,10 @@ fn uri(s: &str) -> Primitive<Uri> {
     Primitive::from_value(Uri::new(s).unwrap())
 }
 
+fn text(s: &str) -> Primitive<FhirString> {
+    Primitive::from_value(FhirString::new(s).unwrap())
+}
+
 fn age1_violated(result: &FhirCoreResult<Age>) -> bool {
     matches!(
         result,
@@ -43,6 +47,27 @@ fn test_new_with_positive_value_and_code_succeeds() {
 }
 
 #[test]
+fn test_new_with_all_fields_succeeds() {
+    let age = Age::new(
+        Some(dec("5")),
+        Some(cd(">")),
+        Some(text("years")),
+        Some(uri(UCUM)),
+        Some(cd("a")),
+        Some(FhirString::new("a1").unwrap()),
+        Vec::new(),
+    );
+    assert!(age.is_ok());
+    let age = age.unwrap();
+    assert_eq!(age.value(), Some(&dec("5")));
+    assert_eq!(age.comparator(), Some(&cd(">")));
+    assert_eq!(age.unit(), Some(&text("years")));
+    assert_eq!(age.system(), Some(&uri(UCUM)));
+    assert_eq!(age.code(), Some(&cd("a")));
+    assert_eq!(age.id().unwrap().as_str(), "a1");
+}
+
+#[test]
 fn test_new_with_code_and_system_no_value_succeeds() {
     let age = Age::new(
         None,
@@ -69,6 +94,7 @@ fn test_new_with_extension_only_succeeds() {
     .unwrap();
     let age = Age::new(None, None, None, None, None, None, vec![ext]);
     assert!(age.is_ok());
+    assert_eq!(age.unwrap().extensions().len(), 1);
 }
 
 #[test]
@@ -207,6 +233,49 @@ fn test_partial_ord_different_units_incomparable() {
     assert_eq!(years.partial_cmp(&months), None);
 }
 
+#[test]
+fn test_partial_ord_identical_instance_is_equal() {
+    let age = Age::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("a")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert_eq!(age.partial_cmp(&age), Some(std::cmp::Ordering::Equal));
+}
+
+#[test]
+fn test_partial_ord_equal_magnitude_different_metadata_is_incomparable() {
+    // Same value/comparator/unit, but differing `id` makes PartialEq false —
+    // partial_cmp must not report Some(Equal) when PartialEq disagrees.
+    let a = Age::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("a")),
+        Some(FhirString::new("a").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    let b = Age::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("a")),
+        Some(FhirString::new("b").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    assert_ne!(a, b);
+    assert_eq!(a.partial_cmp(&b), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]
@@ -215,7 +284,7 @@ fn test_serde_roundtrip_all_fields() {
     let age = Age::new(
         Some(dec("5")),
         Some(cd(">")),
-        None,
+        Some(text("years")),
         Some(uri(UCUM)),
         Some(cd("a")),
         None,
@@ -225,6 +294,45 @@ fn test_serde_roundtrip_all_fields() {
     let json = serde_json::to_string(&age).unwrap();
     let back: Age = serde_json::from_str(&json).unwrap();
     assert_eq!(age, back);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_roundtrip_with_id_and_extension() {
+    let ext = Extension::new(
+        uri("http://example.org/fhir/x"),
+        None,
+        Vec::new(),
+        Some(crate::datatypes::complex::ExtensionValue::Boolean(
+            Primitive::from_value(Boolean::new(true)),
+        )),
+    )
+    .unwrap();
+    let age = Age::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("a")),
+        Some(FhirString::new("a1").unwrap()),
+        vec![ext],
+    )
+    .unwrap();
+    let json = serde_json::to_string(&age).unwrap();
+    let back: Age = serde_json::from_str(&json).unwrap();
+    assert_eq!(age, back);
+    assert_eq!(back.id().unwrap().as_str(), "a1");
+    assert_eq!(back.extensions().len(), 1);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_deserialize_unknown_field_ignored() {
+    let age: Age = serde_json::from_str(
+        r#"{"value": 5, "system": "http://unitsofmeasure.org", "code": "a", "unknown": 1}"#,
+    )
+    .unwrap();
+    assert_eq!(age.value(), Some(&dec("5")));
 }
 
 #[cfg(feature = "serde")]

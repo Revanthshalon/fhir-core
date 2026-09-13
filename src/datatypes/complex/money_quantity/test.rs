@@ -14,6 +14,10 @@ fn uri(s: &str) -> Primitive<Uri> {
     Primitive::from_value(Uri::new(s).unwrap())
 }
 
+fn text(s: &str) -> Primitive<FhirString> {
+    Primitive::from_value(FhirString::new(s).unwrap())
+}
+
 fn mtqy1_violated(result: &FhirCoreResult<MoneyQuantity>) -> bool {
     matches!(
         result,
@@ -41,6 +45,27 @@ fn test_new_with_value_and_code_succeeds() {
 }
 
 #[test]
+fn test_new_with_all_fields_succeeds() {
+    let money = MoneyQuantity::new(
+        Some(dec("10.5")),
+        Some(cd(">")),
+        Some(text("dollars")),
+        Some(uri(ISO_4217)),
+        Some(cd("USD")),
+        Some(FhirString::new("m1").unwrap()),
+        Vec::new(),
+    );
+    assert!(money.is_ok());
+    let money = money.unwrap();
+    assert_eq!(money.value(), Some(&dec("10.5")));
+    assert_eq!(money.comparator(), Some(&cd(">")));
+    assert_eq!(money.unit(), Some(&text("dollars")));
+    assert_eq!(money.system(), Some(&uri(ISO_4217)));
+    assert_eq!(money.code(), Some(&cd("USD")));
+    assert_eq!(money.id().unwrap().as_str(), "m1");
+}
+
+#[test]
 fn test_new_with_extension_only_succeeds() {
     let ext = Extension::new(
         uri("http://example.org/fhir/x"),
@@ -53,6 +78,7 @@ fn test_new_with_extension_only_succeeds() {
     .unwrap();
     let money = MoneyQuantity::new(None, None, None, None, None, None, vec![ext]);
     assert!(money.is_ok());
+    assert_eq!(money.unwrap().extensions().len(), 1);
 }
 
 #[test]
@@ -165,6 +191,47 @@ fn test_partial_ord_different_currencies_incomparable() {
     assert_eq!(usd.partial_cmp(&eur), None);
 }
 
+#[test]
+fn test_partial_ord_identical_instance_is_equal() {
+    let money = MoneyQuantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(ISO_4217)),
+        Some(cd("USD")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert_eq!(money.partial_cmp(&money), Some(std::cmp::Ordering::Equal));
+}
+
+#[test]
+fn test_partial_ord_equal_magnitude_different_metadata_is_incomparable() {
+    let a = MoneyQuantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(ISO_4217)),
+        Some(cd("USD")),
+        Some(FhirString::new("a").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    let b = MoneyQuantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(ISO_4217)),
+        Some(cd("USD")),
+        Some(FhirString::new("b").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    assert_ne!(a, b);
+    assert_eq!(a.partial_cmp(&b), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]
@@ -173,7 +240,7 @@ fn test_serde_roundtrip_all_fields() {
     let money = MoneyQuantity::new(
         Some(dec("10.5")),
         Some(cd(">")),
-        None,
+        Some(text("dollars")),
         Some(uri(ISO_4217)),
         Some(cd("USD")),
         None,
@@ -183,6 +250,45 @@ fn test_serde_roundtrip_all_fields() {
     let json = serde_json::to_string(&money).unwrap();
     let back: MoneyQuantity = serde_json::from_str(&json).unwrap();
     assert_eq!(money, back);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_roundtrip_with_id_and_extension() {
+    let ext = Extension::new(
+        uri("http://example.org/fhir/x"),
+        None,
+        Vec::new(),
+        Some(crate::datatypes::complex::ExtensionValue::Boolean(
+            Primitive::from_value(Boolean::new(true)),
+        )),
+    )
+    .unwrap();
+    let money = MoneyQuantity::new(
+        Some(dec("10.5")),
+        None,
+        None,
+        Some(uri(ISO_4217)),
+        Some(cd("USD")),
+        Some(FhirString::new("m1").unwrap()),
+        vec![ext],
+    )
+    .unwrap();
+    let json = serde_json::to_string(&money).unwrap();
+    let back: MoneyQuantity = serde_json::from_str(&json).unwrap();
+    assert_eq!(money, back);
+    assert_eq!(back.id().unwrap().as_str(), "m1");
+    assert_eq!(back.extensions().len(), 1);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_deserialize_unknown_field_ignored() {
+    let money: MoneyQuantity = serde_json::from_str(
+        r#"{"value": 10.5, "system": "urn:iso:std:iso:4217", "code": "USD", "unknown": 1}"#,
+    )
+    .unwrap();
+    assert_eq!(money.value(), Some(&dec("10.5")));
 }
 
 #[cfg(feature = "serde")]

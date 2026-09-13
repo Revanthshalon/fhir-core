@@ -14,6 +14,10 @@ fn uri(s: &str) -> Primitive<Uri> {
     Primitive::from_value(Uri::new(s).unwrap())
 }
 
+fn text(s: &str) -> Primitive<FhirString> {
+    Primitive::from_value(FhirString::new(s).unwrap())
+}
+
 fn drt1_violated(result: &FhirCoreResult<Duration>) -> bool {
     matches!(
         result,
@@ -41,6 +45,27 @@ fn test_new_with_value_code_and_ucum_system_succeeds() {
 }
 
 #[test]
+fn test_new_with_all_fields_succeeds() {
+    let duration = Duration::new(
+        Some(dec("5")),
+        Some(cd(">")),
+        Some(text("days")),
+        Some(uri(UCUM)),
+        Some(cd("d")),
+        Some(FhirString::new("du1").unwrap()),
+        Vec::new(),
+    );
+    assert!(duration.is_ok());
+    let duration = duration.unwrap();
+    assert_eq!(duration.value(), Some(&dec("5")));
+    assert_eq!(duration.comparator(), Some(&cd(">")));
+    assert_eq!(duration.unit(), Some(&text("days")));
+    assert_eq!(duration.system(), Some(&uri(UCUM)));
+    assert_eq!(duration.code(), Some(&cd("d")));
+    assert_eq!(duration.id().unwrap().as_str(), "du1");
+}
+
+#[test]
 fn test_new_with_value_only_no_code_succeeds() {
     // drt-1 only constrains when code is present.
     let duration = Duration::new(Some(dec("5")), None, None, None, None, None, Vec::new());
@@ -60,6 +85,7 @@ fn test_new_with_extension_only_succeeds() {
     .unwrap();
     let duration = Duration::new(None, None, None, None, None, None, vec![ext]);
     assert!(duration.is_ok());
+    assert_eq!(duration.unwrap().extensions().len(), 1);
 }
 
 #[test]
@@ -187,6 +213,50 @@ fn test_partial_ord_different_units_incomparable() {
     assert_eq!(days.partial_cmp(&hours), None);
 }
 
+#[test]
+fn test_partial_ord_identical_instance_is_equal() {
+    let duration = Duration::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("d")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert_eq!(
+        duration.partial_cmp(&duration),
+        Some(std::cmp::Ordering::Equal)
+    );
+}
+
+#[test]
+fn test_partial_ord_equal_magnitude_different_metadata_is_incomparable() {
+    let a = Duration::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("d")),
+        Some(FhirString::new("a").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    let b = Duration::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("d")),
+        Some(FhirString::new("b").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    assert_ne!(a, b);
+    assert_eq!(a.partial_cmp(&b), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]
@@ -195,7 +265,7 @@ fn test_serde_roundtrip_all_fields() {
     let duration = Duration::new(
         Some(dec("5")),
         Some(cd(">")),
-        None,
+        Some(text("days")),
         Some(uri(UCUM)),
         Some(cd("d")),
         None,
@@ -205,6 +275,45 @@ fn test_serde_roundtrip_all_fields() {
     let json = serde_json::to_string(&duration).unwrap();
     let back: Duration = serde_json::from_str(&json).unwrap();
     assert_eq!(duration, back);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_roundtrip_with_id_and_extension() {
+    let ext = Extension::new(
+        uri("http://example.org/fhir/x"),
+        None,
+        Vec::new(),
+        Some(crate::datatypes::complex::ExtensionValue::Boolean(
+            Primitive::from_value(Boolean::new(true)),
+        )),
+    )
+    .unwrap();
+    let duration = Duration::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("d")),
+        Some(FhirString::new("du1").unwrap()),
+        vec![ext],
+    )
+    .unwrap();
+    let json = serde_json::to_string(&duration).unwrap();
+    let back: Duration = serde_json::from_str(&json).unwrap();
+    assert_eq!(duration, back);
+    assert_eq!(back.id().unwrap().as_str(), "du1");
+    assert_eq!(back.extensions().len(), 1);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_deserialize_unknown_field_ignored() {
+    let duration: Duration = serde_json::from_str(
+        r#"{"value": 5, "system": "http://unitsofmeasure.org", "code": "d", "unknown": 1}"#,
+    )
+    .unwrap();
+    assert_eq!(duration.value(), Some(&dec("5")));
 }
 
 #[cfg(feature = "serde")]

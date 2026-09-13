@@ -14,6 +14,10 @@ fn uri(s: &str) -> Primitive<Uri> {
     Primitive::from_value(Uri::new(s).unwrap())
 }
 
+fn text(s: &str) -> Primitive<FhirString> {
+    Primitive::from_value(FhirString::new(s).unwrap())
+}
+
 fn dis1_violated(result: &FhirCoreResult<Distance>) -> bool {
     matches!(
         result,
@@ -38,6 +42,27 @@ fn test_new_with_value_and_code_succeeds() {
     );
     assert!(distance.is_ok());
     assert_eq!(distance.unwrap().value(), Some(&dec("5.4")));
+}
+
+#[test]
+fn test_new_with_all_fields_succeeds() {
+    let distance = Distance::new(
+        Some(dec("5.4")),
+        Some(cd(">")),
+        Some(text("meters")),
+        Some(uri(UCUM)),
+        Some(cd("m")),
+        Some(FhirString::new("d1").unwrap()),
+        Vec::new(),
+    );
+    assert!(distance.is_ok());
+    let distance = distance.unwrap();
+    assert_eq!(distance.value(), Some(&dec("5.4")));
+    assert_eq!(distance.comparator(), Some(&cd(">")));
+    assert_eq!(distance.unit(), Some(&text("meters")));
+    assert_eq!(distance.system(), Some(&uri(UCUM)));
+    assert_eq!(distance.code(), Some(&cd("m")));
+    assert_eq!(distance.id().unwrap().as_str(), "d1");
 }
 
 #[test]
@@ -68,6 +93,7 @@ fn test_new_with_extension_only_succeeds() {
     .unwrap();
     let distance = Distance::new(None, None, None, None, None, None, vec![ext]);
     assert!(distance.is_ok());
+    assert_eq!(distance.unwrap().extensions().len(), 1);
 }
 
 #[test]
@@ -180,6 +206,50 @@ fn test_partial_ord_different_units_incomparable() {
     assert_eq!(m.partial_cmp(&km), None);
 }
 
+#[test]
+fn test_partial_ord_identical_instance_is_equal() {
+    let distance = Distance::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("m")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert_eq!(
+        distance.partial_cmp(&distance),
+        Some(std::cmp::Ordering::Equal)
+    );
+}
+
+#[test]
+fn test_partial_ord_equal_magnitude_different_metadata_is_incomparable() {
+    let a = Distance::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("m")),
+        Some(FhirString::new("a").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    let b = Distance::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("m")),
+        Some(FhirString::new("b").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    assert_ne!(a, b);
+    assert_eq!(a.partial_cmp(&b), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]
@@ -188,7 +258,7 @@ fn test_serde_roundtrip_all_fields() {
     let distance = Distance::new(
         Some(dec("5.4")),
         Some(cd(">")),
-        None,
+        Some(text("meters")),
         Some(uri(UCUM)),
         Some(cd("m")),
         None,
@@ -198,6 +268,45 @@ fn test_serde_roundtrip_all_fields() {
     let json = serde_json::to_string(&distance).unwrap();
     let back: Distance = serde_json::from_str(&json).unwrap();
     assert_eq!(distance, back);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_roundtrip_with_id_and_extension() {
+    let ext = Extension::new(
+        uri("http://example.org/fhir/x"),
+        None,
+        Vec::new(),
+        Some(crate::datatypes::complex::ExtensionValue::Boolean(
+            Primitive::from_value(Boolean::new(true)),
+        )),
+    )
+    .unwrap();
+    let distance = Distance::new(
+        Some(dec("5.4")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("m")),
+        Some(FhirString::new("d1").unwrap()),
+        vec![ext],
+    )
+    .unwrap();
+    let json = serde_json::to_string(&distance).unwrap();
+    let back: Distance = serde_json::from_str(&json).unwrap();
+    assert_eq!(distance, back);
+    assert_eq!(back.id().unwrap().as_str(), "d1");
+    assert_eq!(back.extensions().len(), 1);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_deserialize_unknown_field_ignored() {
+    let distance: Distance = serde_json::from_str(
+        r#"{"value": 5.4, "system": "http://unitsofmeasure.org", "code": "m", "unknown": 1}"#,
+    )
+    .unwrap();
+    assert_eq!(distance.value(), Some(&dec("5.4")));
 }
 
 #[cfg(feature = "serde")]
