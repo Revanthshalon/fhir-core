@@ -143,31 +143,14 @@ fixes, error ergonomics, serde precision, and doc drift).
      Both wired into `Extension` as `ExtensionValue::Identifier`/`::Reference`
      (each embeds the whole object, no companion split).
 
-- **All other FHIR R5 complex/metadata/special-purpose types are now doc-only
-  stubs** (34 of them — general-purpose types like `HumanName`/`Address`/
-  `Attachment`/`Timing`/`Dosage`, metadata types like `DataRequirement`/
-  `TriggerDefinition`/`UsageContext`/`Expression`, and special-purpose types
-  `Meta`/`Narrative`/`ElementDefinition`), same pattern as the original six:
-  private modules under `src/datatypes/complex/`, real fields,
-  `#![allow(dead_code)]`, module docs citing spec URLs, none implemented
-  (no constructor/validation/accessors/serde), none wired into `Extension`.
-  **Audit Note (ISSUE-001 / ISSUE-002)**: The 34 stubs currently declare only
-  their payload fields in `struct` definitions, omitting inherited `Element`
-  fields (`id: Option<FhirString>`, `extension: Vec<Extension>`) and backbone
-  `modifierExtension`. In addition, quantity profiles (`Age`, `Duration`, etc.)
-  duplicate `Quantity`'s fields rather than using a newtype wrapper. When picking
-  up any stub, fix the struct shape first before implementing.
-  Two are blocked on more than just "not picked up yet": `Narrative.div`
-  needs the unimplemented `xhtml` primitive (see the roadmap item above), and
-  `ElementDefinition` is intentionally a *partial* stub (only ~20 of its ~50
-  fields) given its exceptional size and different domain (profiling, not
-  instance data). Several fields were cross-checked against a non-pinned
-  continuous-build page rather than the frozen R5 5.0.0 page (flagged
-  per-module where that happened: `Expression`, `ParameterDefinition`,
-  `RelatedArtifact`, `TriggerDefinition`) — re-verify those harder than usual
-  before implementing. One real type from the earlier draft list doesn't
-  exist in R5 at all: `Contributor` was removed after R4 — confirmed via
-  metadatatypes-definitions.html, not stubbed here.
+- **Full per-type status (implemented / stub / not started) for every FHIR R4 and R5
+  data type now lives in [`docs/DATATYPES_ROADMAP.md`](./DATATYPES_ROADMAP.md)** —
+  that's the source of truth for stub counts and which types are next; this file no
+  longer duplicates the list (it previously said "34 stubs", which was already stale
+  by the time it was corrected — the roadmap doc's counts are kept current instead).
+  The stub-struct-shape issues that used to be called out here (missing `id`/
+  `extension`, `Quantity` profile duplication vs. newtype) are resolved — see
+  `REVIEW_ISSUES.md` ISSUE-001 and ISSUE-002.
 - **`Extension` drops unrecognized `value[x]`** on deserialize (lossy
   round-trip for the ~28 complex types this crate still doesn't model, now
   that `Period`/`Coding`/`Quantity`/`CodeableConcept`/`Identifier`/`Reference`
