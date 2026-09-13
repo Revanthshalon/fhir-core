@@ -18,6 +18,13 @@
 //! Use [`SimpleQuantity::new`] to construct a validated instance, or
 //! [`SimpleQuantity::new_unchecked`] when the fields are already known to satisfy the
 //! invariants.
+//!
+//! # Ordering
+//! `SimpleQuantity` implements `PartialOrd` (not `Ord`) via the same comparator-aware,
+//! unit-aware magnitude comparison `Quantity` uses (see `quantity_magnitude`'s module
+//! docs) — though since `comparator` is structurally absent here (`sqty-1`), every
+//! comparison is effectively exact-vs-exact; `None` can still occur for different
+//! units or a missing value.
 
 #[cfg(feature = "serde")]
 use serde::de::{Error as DeError, MapAccess, Visitor};
@@ -27,6 +34,7 @@ use serde::ser::SerializeMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::datatypes::complex::Extension;
+use crate::datatypes::complex::quantity_magnitude::{QuantityMagnitude, quantity_partial_cmp};
 use crate::datatypes::primitive::Primitive;
 #[cfg(feature = "serde")]
 use crate::datatypes::primitive::{
@@ -308,5 +316,29 @@ impl SimpleQuantity {
     #[inline]
     pub fn code(&self) -> Option<&Primitive<Code>> {
         self.code.as_ref()
+    }
+
+    fn magnitude(&self) -> QuantityMagnitude<'_> {
+        QuantityMagnitude {
+            value: self.value.as_ref().and_then(Primitive::value),
+            comparator: None,
+            system: self.system.as_ref().and_then(Primitive::value),
+            code: self.code.as_ref().and_then(Primitive::value),
+        }
+    }
+}
+
+impl PartialOrd for SimpleQuantity {
+    /// Comparator-aware (trivially — `comparator` doesn't exist here), unit-aware
+    /// partial order. See the module docs' "Ordering" section for exactly when this
+    /// returns `None`.
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if self == other {
+            return Some(std::cmp::Ordering::Equal);
+        }
+        match quantity_partial_cmp(self.magnitude(), other.magnitude()) {
+            Some(std::cmp::Ordering::Equal) => None,
+            ordering => ordering,
+        }
     }
 }

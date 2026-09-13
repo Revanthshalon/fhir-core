@@ -113,6 +113,58 @@ fn test_new_unchecked_bypasses_mtqy1() {
     assert_eq!(money.value(), Some(&dec("10")));
 }
 
+// --- Ordering ---
+
+#[test]
+fn test_partial_ord_same_currency_orders_by_value() {
+    let small = MoneyQuantity::new(
+        Some(dec("3")),
+        None,
+        None,
+        Some(uri(ISO_4217)),
+        Some(cd("USD")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let large = MoneyQuantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(ISO_4217)),
+        Some(cd("USD")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert!(small < large);
+}
+
+#[test]
+fn test_partial_ord_different_currencies_incomparable() {
+    let usd = MoneyQuantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(ISO_4217)),
+        Some(cd("USD")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let eur = MoneyQuantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(ISO_4217)),
+        Some(cd("EUR")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert_eq!(usd.partial_cmp(&eur), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]

@@ -155,6 +155,58 @@ fn test_new_unchecked_bypasses_age1() {
     assert_eq!(age.value(), Some(&dec("-1")));
 }
 
+// --- Ordering ---
+
+#[test]
+fn test_partial_ord_same_unit_orders_by_value() {
+    let young = Age::new(
+        Some(dec("3")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("a")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let old = Age::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("a")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert!(young < old);
+}
+
+#[test]
+fn test_partial_ord_different_units_incomparable() {
+    let years = Age::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("a")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let months = Age::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("mo")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert_eq!(years.partial_cmp(&months), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]

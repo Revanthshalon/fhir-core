@@ -135,6 +135,58 @@ fn test_new_unchecked_bypasses_drt1() {
     assert!(duration.value().is_none());
 }
 
+// --- Ordering ---
+
+#[test]
+fn test_partial_ord_same_unit_orders_by_value() {
+    let short = Duration::new(
+        Some(dec("3")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("d")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let long = Duration::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("d")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert!(short < long);
+}
+
+#[test]
+fn test_partial_ord_different_units_incomparable() {
+    let days = Duration::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("d")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let hours = Duration::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("h")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert_eq!(days.partial_cmp(&hours), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]

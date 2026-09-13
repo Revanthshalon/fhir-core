@@ -28,6 +28,13 @@
 //! Use [`Quantity::new`] to construct a validated instance (checks `ele-1` and
 //! `qty-3`), or [`Quantity::new_unchecked`] when the fields are already known to
 //! satisfy them.
+//!
+//! # Ordering
+//! `Quantity` implements `PartialOrd` (not `Ord` — it is a genuine partial order, not
+//! a total one) via comparator-aware, unit-aware magnitude comparison in
+//! `quantity_magnitude`. See that module's docs for exactly when comparisons return
+//! `None` instead of a definite order (different units, a missing value, an `ad`
+//! comparator, or genuinely overlapping open-ended ranges like `<10` vs `>5`).
 
 #[cfg(feature = "serde")]
 use serde::de::{Error as DeError, MapAccess, Visitor};
@@ -37,6 +44,7 @@ use serde::ser::SerializeMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::datatypes::complex::Extension;
+use crate::datatypes::complex::quantity_magnitude::{QuantityMagnitude, quantity_partial_cmp};
 use crate::datatypes::primitive::Primitive;
 #[cfg(feature = "serde")]
 use crate::datatypes::primitive::{
@@ -367,5 +375,31 @@ impl Quantity {
     #[inline]
     pub fn code(&self) -> Option<&Primitive<Code>> {
         self.code.as_ref()
+    }
+
+    fn magnitude(&self) -> QuantityMagnitude<'_> {
+        QuantityMagnitude {
+            value: self.value.as_ref().and_then(Primitive::value),
+            comparator: self.comparator.as_ref().and_then(Primitive::value),
+            system: self.system.as_ref().and_then(Primitive::value),
+            code: self.code.as_ref().and_then(Primitive::value),
+        }
+    }
+}
+
+impl PartialOrd for Quantity {
+    /// Comparator-aware, unit-aware partial order. See the module docs' "Ordering"
+    /// section for exactly when this returns `None`.
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if self == other {
+            return Some(std::cmp::Ordering::Equal);
+        }
+        match quantity_partial_cmp(self.magnitude(), other.magnitude()) {
+            // Reachable only when the magnitudes tie (e.g. numerically-equal but
+            // differently-formatted Decimal strings) while the struct-wide equality
+            // above already failed — never claim Equal unless PartialEq also would.
+            Some(std::cmp::Ordering::Equal) => None,
+            ordering => ordering,
+        }
     }
 }

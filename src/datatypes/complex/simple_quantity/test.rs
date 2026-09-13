@@ -89,6 +89,38 @@ fn test_new_unchecked_bypasses_qty3() {
     assert!(quantity.system().is_none());
 }
 
+// --- Ordering ---
+
+#[test]
+fn test_partial_ord_same_unit_orders_by_value() {
+    let low = SimpleQuantity::new(Some(dec("3")), None, None, None, None, Vec::new()).unwrap();
+    let high = SimpleQuantity::new(Some(dec("5")), None, None, None, None, Vec::new()).unwrap();
+    assert!(low < high);
+}
+
+#[test]
+fn test_partial_ord_different_units_incomparable() {
+    let mg = SimpleQuantity::new(
+        Some(dec("5")),
+        None,
+        Some(uri("http://unitsofmeasure.org")),
+        Some(cd("mg")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let kg = SimpleQuantity::new(
+        Some(dec("5")),
+        None,
+        Some(uri("http://unitsofmeasure.org")),
+        Some(cd("kg")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert_eq!(mg.partial_cmp(&kg), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]

@@ -139,6 +139,57 @@ fn test_new_unchecked_bypasses_cnt3() {
     assert_eq!(count.value(), Some(&dec("5.5")));
 }
 
+// --- Ordering ---
+
+#[test]
+fn test_partial_ord_same_unit_orders_by_value() {
+    let low = Count::new(
+        Some(dec("3")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("1")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let high = Count::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("1")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert!(low < high);
+}
+
+#[test]
+fn test_partial_ord_missing_value_incomparable() {
+    let with_value = Count::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("1")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let without_value = Count::new_unchecked(
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some(FhirString::new("q").unwrap()),
+        Vec::new(),
+    );
+    assert_eq!(with_value.partial_cmp(&without_value), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]

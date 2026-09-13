@@ -128,6 +128,58 @@ fn test_new_unchecked_bypasses_dis1() {
     assert_eq!(distance.value(), Some(&dec("5.4")));
 }
 
+// --- Ordering ---
+
+#[test]
+fn test_partial_ord_same_unit_orders_by_value() {
+    let near = Distance::new(
+        Some(dec("3")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("m")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let far = Distance::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("m")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert!(near < far);
+}
+
+#[test]
+fn test_partial_ord_different_units_incomparable() {
+    let m = Distance::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("m")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let km = Distance::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri(UCUM)),
+        Some(cd("km")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert_eq!(m.partial_cmp(&km), None);
+}
+
 // --- Serde ---
 
 #[cfg(feature = "serde")]

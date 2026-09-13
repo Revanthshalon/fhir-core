@@ -206,6 +206,94 @@ fn test_serde_deserialize_value_with_companion() {
     assert_eq!(quantity.value().unwrap().id().unwrap().as_str(), "vid");
 }
 
+// --- Ordering ---
+
+#[test]
+fn test_partial_ord_same_unit_orders_by_value() {
+    let low = Quantity::new(
+        Some(dec("3")),
+        None,
+        None,
+        Some(uri("http://unitsofmeasure.org")),
+        Some(cd("mg")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let high = Quantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri("http://unitsofmeasure.org")),
+        Some(cd("mg")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert!(low < high);
+    assert!(high > low);
+}
+
+#[test]
+fn test_partial_ord_different_units_incomparable() {
+    let mg = Quantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri("http://unitsofmeasure.org")),
+        Some(cd("mg")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    let kg = Quantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        Some(uri("http://unitsofmeasure.org")),
+        Some(cd("kg")),
+        None,
+        Vec::new(),
+    )
+    .unwrap();
+    assert_eq!(mg.partial_cmp(&kg), None);
+}
+
+#[test]
+fn test_partial_ord_equal_values_different_metadata_is_incomparable_not_equal() {
+    // Same numeric magnitude, but differing `id` makes PartialEq false — partial_cmp
+    // must not report Some(Equal) when PartialEq disagrees.
+    let a = Quantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        None,
+        None,
+        Some(FhirString::new("a").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    let b = Quantity::new(
+        Some(dec("5")),
+        None,
+        None,
+        None,
+        None,
+        Some(FhirString::new("b").unwrap()),
+        Vec::new(),
+    )
+    .unwrap();
+    assert_ne!(a, b);
+    assert_eq!(a.partial_cmp(&b), None);
+}
+
+#[test]
+fn test_partial_ord_equal_values_and_metadata_is_equal() {
+    let a = Quantity::new(Some(dec("5")), None, None, None, None, None, Vec::new()).unwrap();
+    let b = Quantity::new(Some(dec("5")), None, None, None, None, None, Vec::new()).unwrap();
+    assert_eq!(a.partial_cmp(&b), Some(std::cmp::Ordering::Equal));
+}
+
 // --- Serde: negative / boundary ---
 
 #[cfg(feature = "serde")]

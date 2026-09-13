@@ -57,6 +57,7 @@ mod monetary_component;
 mod money;
 mod narrative;
 mod parameter_definition;
+mod quantity_magnitude;
 mod range;
 mod ratio;
 mod ratio_range;
